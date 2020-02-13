@@ -7,6 +7,7 @@ import org.lwjgl.system.MemoryUtil.memUTF8
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * Describes a Vulkan device attached to an [instance] and a [physicalDevice].
@@ -335,6 +336,7 @@ open class VulkanDevice(val instance: VkInstance, val physicalDevice: VkPhysical
         @JvmStatic fun fromPhysicalDevice(instance: VkInstance, physicalDeviceFilter: (Int, DeviceData) -> Boolean,
                                           additionalExtensions: (VkPhysicalDevice) -> Array<String> = { arrayOf() },
                                           validationLayers: Array<String> = arrayOf(),
+                                          discoveredDevices: ArrayList<String>,
                                           headless: Boolean = false): VulkanDevice {
             return stackPush().use { stack ->
 
@@ -374,6 +376,7 @@ open class VulkanDevice(val instance: VkInstance, val physicalDevice: VkPhysical
                     }
 
                     deviceList.add(deviceData)
+                    discoveredDevices.add("Vulkan: "+deviceData.name)
                 }
 
                 deviceList.forEachIndexed { i, device ->
