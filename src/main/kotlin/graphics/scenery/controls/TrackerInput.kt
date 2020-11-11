@@ -3,7 +3,7 @@ package graphics.scenery.controls
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import graphics.scenery.Camera
-import graphics.scenery.Mesh
+import graphics.scenery.mesh.Mesh
 import graphics.scenery.Node
 import org.joml.Quaternionf
 

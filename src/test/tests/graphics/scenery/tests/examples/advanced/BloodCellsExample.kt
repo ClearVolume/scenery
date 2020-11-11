@@ -2,6 +2,9 @@ package graphics.scenery.tests.examples.advanced
 
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.extensions.minus
 import org.joml.Vector3f
@@ -48,8 +51,7 @@ class BloodCellsExample : SceneryBase("BloodCellsExample", windowWidth = 1280, w
             scene.addChild(it)
         }
 
-        val erythrocyte = Mesh()
-        erythrocyte.readFromOBJ(Mesh::class.java.getResource("models/erythrocyte.obj").file)
+        val erythrocyte = MeshImporter.readFromOBJ(Mesh::class.java.getResource("models/erythrocyte.obj").file)
         erythrocyte.material = ShaderMaterial.fromFiles("DefaultDeferredInstanced.vert", "DefaultDeferred.frag")
         erythrocyte.material.ambient = Vector3f(0.1f, 0.0f, 0.0f)
         erythrocyte.material.diffuse = Vector3f(0.9f, 0.0f, 0.02f)
@@ -60,8 +62,7 @@ class BloodCellsExample : SceneryBase("BloodCellsExample", windowWidth = 1280, w
         erythrocyte.instancedProperties["ModelMatrix"] = { erythrocyte.model }
         scene.addChild(erythrocyte)
 
-        val leucocyte = Mesh()
-        leucocyte.readFromOBJ(Mesh::class.java.getResource("models/leukocyte.obj").file)
+        val leucocyte = MeshImporter.readFromOBJ(Mesh::class.java.getResource("models/leukocyte.obj").file)
         leucocyte.name = "leucocyte_Master"
         leucocyte.material = ShaderMaterial.fromFiles("DefaultDeferredInstanced.vert", "DefaultDeferred.frag")
         leucocyte.material.ambient = Vector3f(0.1f, 0.0f, 0.0f)

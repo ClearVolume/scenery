@@ -6,6 +6,7 @@ import graphics.scenery.backends.Renderer
 import graphics.scenery.backends.Shaders
 import graphics.scenery.compute.ComputeMetadata
 import graphics.scenery.compute.InvocationType
+import graphics.scenery.mesh.Box
 import graphics.scenery.tests.examples.basic.TexturedCubeExample
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.Image

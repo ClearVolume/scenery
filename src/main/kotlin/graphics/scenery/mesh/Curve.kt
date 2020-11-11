@@ -1,5 +1,8 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.BufferUtils
+import graphics.scenery.HasGeometry
+import graphics.scenery.Spline
 import graphics.scenery.utils.extensions.minus
 import graphics.scenery.utils.extensions.toFloatArray
 import graphics.scenery.utils.extensions.xyz
@@ -51,12 +54,12 @@ class Curve(curve: Spline, baseShape: () -> ArrayList<Vector3f>): Mesh("CurveGeo
 
         val verticesVectors = calculateTriangles(curveGeometry)
 
-        vertices = BufferUtils.allocateFloat(verticesVectors.size*3)
+        vertices = BufferUtils.allocateFloat(verticesVectors.size * 3)
         verticesVectors.forEach{
             vertices.put(it.toFloatArray())
         }
         vertices.flip()
-        texcoords = BufferUtils.allocateFloat(verticesVectors.size*2)
+        texcoords = BufferUtils.allocateFloat(verticesVectors.size * 2)
         recalculateNormals()
     }
 

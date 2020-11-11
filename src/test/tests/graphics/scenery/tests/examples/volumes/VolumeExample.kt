@@ -3,12 +3,13 @@ package graphics.scenery.tests.examples.volumes
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.TrackedStereoGlasses
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Icosphere
 import graphics.scenery.volumes.Colormap
 import graphics.scenery.volumes.TransferFunction
 import graphics.scenery.volumes.Volume
 import org.joml.Vector3f
 import org.junit.Test
-import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.concurrent.thread
 

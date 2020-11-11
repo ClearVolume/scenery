@@ -1,5 +1,6 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.fonts.SDFFontAtlas
 import graphics.scenery.textures.Texture
@@ -23,7 +24,7 @@ class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillb
     /** The text displayed on this font board */
     var text: String = ""
         set(value) {
-            if(value != field) {
+            if (value != field) {
                 field = value
 
                 needsPreUpdate = true
@@ -39,7 +40,7 @@ class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillb
      */
     var fontFamily: String = font
         set(value) {
-            if(value != field) {
+            if (value != field) {
                 field = value
 
                 needsPreUpdate = true
@@ -48,14 +49,21 @@ class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillb
         }
 
     /** The [ShaderProperty] storing whether the font board should be renderer transparently. */
-    @ShaderProperty var transparent: Int = 1
+    @ShaderProperty
+    var transparent: Int = 1
+
     /** [ShaderProperty] to store the size of the used texture atlas storing the font's signed distance field */
-    @ShaderProperty var atlasSize = Vector2i(1024, 1024)
+    @ShaderProperty
+    var atlasSize = Vector2i(1024, 1024)
+
     /** The [ShaderProperty] storing the font's color. */
-    @ShaderProperty var fontColor: Vector4f = Vector4f(0.5f, 0.5f, 0.5f, 1.0f)
+    @ShaderProperty
+    var fontColor: Vector4f = Vector4f(0.5f, 0.5f, 0.5f, 1.0f)
+
     /** The [ShaderProperty] storing the background color of the font board,
      * used only if [transparent] is 0. */
-    @ShaderProperty var backgroundColor: Vector4f = Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
+    @ShaderProperty
+    var backgroundColor: Vector4f = Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
 
     /** Flag to indicate whether the update routine should be called by the renderer */
     private var needsPreUpdate = true
@@ -77,13 +85,14 @@ class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillb
     }
 
     override fun preUpdate(renderer: Renderer, hub: Hub?) {
-        if(!needsPreUpdate || hub == null) {
+        if (!needsPreUpdate || hub == null) {
             return
         }
 
-        sdfCache.getOrPut(fontFamily,
-            { SDFFontAtlas(hub, fontFamily,
-                maxDistance = hub.get<Settings>(SceneryElement.Settings)?.get("sdf.MaxDistance") ?: 12) }).apply {
+        sdfCache.getOrPut(fontFamily, {
+            SDFFontAtlas(hub, fontFamily, maxDistance = hub.get<Settings>(SceneryElement.Settings)?.get("sdf.MaxDistance")
+                    ?: 12)
+        }).apply {
 
 
             logger.debug("Updating mesh for text board {} to '{}'...", name, text)

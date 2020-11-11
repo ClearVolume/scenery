@@ -3,6 +3,7 @@ package graphics.scenery.controls
 import graphics.scenery.*
 import graphics.scenery.backends.Display
 import graphics.scenery.backends.vulkan.VulkanDevice
+import graphics.scenery.mesh.Mesh
 import graphics.scenery.utils.LazyLogger
 import graphics.scenery.utils.extensions.plus
 import org.joml.*

@@ -7,6 +7,10 @@ import graphics.scenery.controls.OpenVRHMD
 import graphics.scenery.controls.TrackedDeviceType
 import graphics.scenery.controls.TrackerRole
 import graphics.scenery.controls.behaviours.ControllerDrag
+import graphics.scenery.mesh.BoundingGrid
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.extensions.times
 import graphics.scenery.volumes.Volume
@@ -76,12 +80,7 @@ class ReaderExample : SceneryBase("ReaderExample", 1280, 720) {
                     Volume.fromPath(Paths.get(files.first()), hub)
                 }
 
-                else -> {
-                    val m = Mesh()
-                    m.readFrom(files.first())
-
-                    m
-                }
+                else -> MeshImporter.readFrom(files.first())
             }
         } else {
             logger.warn("No file selected, returning empty node.")
@@ -246,7 +245,7 @@ class ReaderExample : SceneryBase("ReaderExample", 1280, 720) {
 
         when(extension) {
             "obj", "stl" -> {
-                loadedObject = Mesh().readFrom(file.toFile().absolutePath)
+                loadedObject = MeshImporter.readFrom(file.toFile().absolutePath)
                 loadedObject.centerOn(Vector3f(0.0f))
                 loadedObject.fitInto(6.0f, scaleUp = false)
             }

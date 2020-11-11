@@ -2,6 +2,7 @@ package graphics.scenery.tests.examples.basic;
 
 import graphics.scenery.*;
 import graphics.scenery.backends.Renderer;
+import graphics.scenery.mesh.Box;
 import graphics.scenery.textures.Texture;
 import graphics.scenery.utils.Image;
 import org.joml.Vector3f;

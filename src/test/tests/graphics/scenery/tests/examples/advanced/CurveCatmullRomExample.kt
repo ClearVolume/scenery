@@ -4,6 +4,8 @@ import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
 import graphics.scenery.CatmullRomSpline
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Curve
 import org.joml.Vector3f
 
 import org.junit.Test

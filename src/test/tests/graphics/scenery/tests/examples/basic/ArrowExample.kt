@@ -3,6 +3,8 @@ package graphics.scenery.tests.examples.basic
 import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Arrow
+import graphics.scenery.mesh.Box
 import graphics.scenery.utils.extensions.minus
 import org.junit.Test
 import kotlin.concurrent.thread

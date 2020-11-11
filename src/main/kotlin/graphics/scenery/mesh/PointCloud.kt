@@ -1,8 +1,11 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.BufferUtils
+import graphics.scenery.GeometryType
+import graphics.scenery.OrientedBoundingBox
+import graphics.scenery.ShaderMaterial
 import org.joml.Vector3f
 import java.nio.FloatBuffer
-import java.nio.IntBuffer
 import java.nio.file.FileSystems
 import java.nio.file.Files
 
@@ -31,7 +34,7 @@ open class PointCloud(var pointRadius: Float = 1.0f, override var name: String =
      */
     fun setupPointCloud() {
         if( this.texcoords.limit() == 0 ) {// Only preinitialize if texcoords has not been preinialized
-            this.texcoords = BufferUtils.allocateFloat(vertices.limit()/3 * 2)
+            this.texcoords = BufferUtils.allocateFloat(vertices.limit() / 3 * 2)
             var i = 0
             while (i < this.texcoords.limit() - 1) {
                 this.texcoords.put(i, this.pointRadius)
@@ -40,7 +43,7 @@ open class PointCloud(var pointRadius: Float = 1.0f, override var name: String =
             }
         }
         if( this.normals.limit() == 0 ) {// Only preinitialize if need be
-            this.normals = BufferUtils.allocateFloatAndPut( FloatArray(vertices.limit(), { 1.0f } ) )
+            this.normals = BufferUtils.allocateFloatAndPut(FloatArray(vertices.limit(), { 1.0f }))
         }
     }
 
@@ -54,9 +57,9 @@ open class PointCloud(var pointRadius: Float = 1.0f, override var name: String =
     fun readFromPALM(filename: String) {
 
         val count = Files.lines(FileSystems.getDefault().getPath(filename)).count()
-        this.vertices = BufferUtils.allocateFloat(count.toInt()*3)
-        this.normals = BufferUtils.allocateFloat(count.toInt()*3)
-        this.texcoords = BufferUtils.allocateFloat(count.toInt()*2)
+        this.vertices = BufferUtils.allocateFloat(count.toInt() * 3)
+        this.normals = BufferUtils.allocateFloat(count.toInt() * 3)
+        this.texcoords = BufferUtils.allocateFloat(count.toInt() * 2)
 
         logger.info("Reading ${count/3} locations from $filename...")
 

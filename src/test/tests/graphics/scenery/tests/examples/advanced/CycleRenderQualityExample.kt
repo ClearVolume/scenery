@@ -4,6 +4,8 @@ import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.RenderConfigReader
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Icosphere
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.extensions.minus
 import org.junit.Test

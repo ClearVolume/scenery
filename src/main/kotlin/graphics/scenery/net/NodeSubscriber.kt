@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.jogamp.opengl.math.Quaternion
 import graphics.scenery.*
+import graphics.scenery.mesh.*
 import graphics.scenery.utils.LazyLogger
 import graphics.scenery.utils.Statistics
 import graphics.scenery.volumes.TransferFunction

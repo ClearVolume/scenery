@@ -1,7 +1,7 @@
 package graphics.scenery.tests.unit
 
 import org.joml.Vector3f
-import graphics.scenery.Box
+import graphics.scenery.mesh.Box
 import graphics.scenery.Node
 import graphics.scenery.Scene
 import graphics.scenery.numerics.Random

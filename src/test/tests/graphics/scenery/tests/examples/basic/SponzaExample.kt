@@ -3,6 +3,10 @@ package graphics.scenery.tests.examples.basic
 import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
+import graphics.scenery.mesh.TextBoard
 import graphics.scenery.numerics.Random
 import org.joml.Vector4f
 import org.junit.Test
@@ -52,9 +56,7 @@ class SponzaExample : SceneryBase("SponzaExample", windowWidth = 1280, windowHei
             it
         }
 
-        val mesh = Mesh()
-        with(mesh) {
-            readFromOBJ(getDemoFilesPath() + "/sponza.obj", importMaterials = false)
+        MeshImporter.readFromOBJ(getDemoFilesPath() + "/sponza.obj", importMaterials = false).apply {
             rotation.rotateY(Math.PI.toFloat() / 2.0f)
             scale = Vector3f(0.01f, 0.01f, 0.01f)
             name = "Sponza Mesh"

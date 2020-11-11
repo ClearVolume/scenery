@@ -1,5 +1,6 @@
 package graphics.scenery
 
+import graphics.scenery.mesh.Light
 import org.joml.Vector3f
 
 /**

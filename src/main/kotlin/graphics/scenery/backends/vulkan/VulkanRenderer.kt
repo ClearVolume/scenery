@@ -5,6 +5,7 @@ import graphics.scenery.backends.*
 import graphics.scenery.backends.vulkan.VulkanDevice.VulkanObjectType.*
 import graphics.scenery.compute.ComputeMetadata
 import graphics.scenery.compute.InvocationType
+import graphics.scenery.mesh.Light
 import graphics.scenery.spirvcrossj.Loader
 import graphics.scenery.spirvcrossj.libspirvcrossj
 import graphics.scenery.textures.Texture

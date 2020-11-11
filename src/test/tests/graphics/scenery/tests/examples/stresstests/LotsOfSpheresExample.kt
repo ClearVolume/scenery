@@ -3,6 +3,7 @@ package graphics.scenery.tests.examples.stresstests
 import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Sphere
 import graphics.scenery.numerics.Random
 import org.junit.Test
 import kotlin.concurrent.thread

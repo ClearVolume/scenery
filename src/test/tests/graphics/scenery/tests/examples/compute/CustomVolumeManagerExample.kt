@@ -4,9 +4,7 @@ import bdv.util.AxisOrder
 import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
-import graphics.scenery.backends.Shaders
-import graphics.scenery.tests.examples.basic.TexturedCubeExample
-import graphics.scenery.tests.examples.basic.TexturedCubeJavaExample
+import graphics.scenery.mesh.Box
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.Image
 import graphics.scenery.volumes.TransferFunction
@@ -22,7 +20,6 @@ import org.lwjgl.system.MemoryUtil
 import tpietzsch.example2.VolumeViewerOptions
 import tpietzsch.shadergen.generate.SegmentTemplate
 import tpietzsch.shadergen.generate.SegmentType
-import kotlin.concurrent.thread
 
 /**
  * Example showing using a custom [graphics.scenery.volumes.VolumeManager] with

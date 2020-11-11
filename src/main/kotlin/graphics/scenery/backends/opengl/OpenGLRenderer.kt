@@ -9,6 +9,8 @@ import com.jogamp.opengl.util.Animator
 import com.jogamp.opengl.util.awt.AWTGLReadBufferUtil
 import graphics.scenery.*
 import graphics.scenery.backends.*
+import graphics.scenery.mesh.Light
+import graphics.scenery.mesh.Plane
 import graphics.scenery.spirvcrossj.Loader
 import graphics.scenery.spirvcrossj.libspirvcrossj
 import graphics.scenery.textures.Texture

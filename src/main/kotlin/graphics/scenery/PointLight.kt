@@ -1,5 +1,7 @@
 package graphics.scenery
 
+import graphics.scenery.mesh.Light
+import graphics.scenery.mesh.Sphere
 import graphics.scenery.utils.extensions.xyz
 import org.joml.Vector3f
 import org.joml.Vector4f

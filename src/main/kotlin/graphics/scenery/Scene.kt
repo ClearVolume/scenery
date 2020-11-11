@@ -1,5 +1,6 @@
 package graphics.scenery
 
+import graphics.scenery.mesh.Box
 import org.joml.Vector3f
 import graphics.scenery.utils.MaybeIntersects
 import graphics.scenery.utils.extensions.plus

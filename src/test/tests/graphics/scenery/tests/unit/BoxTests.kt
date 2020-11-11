@@ -1,6 +1,6 @@
 package graphics.scenery.tests.unit
 
-import graphics.scenery.Box
+import graphics.scenery.mesh.Box
 import graphics.scenery.Scene
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.LazyLogger

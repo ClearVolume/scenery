@@ -1,15 +1,14 @@
 package graphics.scenery.tests.examples.advanced
 
 import graphics.scenery.UniformBSpline
-import cleargl.GLVector
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
-import graphics.scenery.Curve
+import graphics.scenery.mesh.Curve
+import graphics.scenery.mesh.Box
 import org.joml.Vector3f
 
 import org.junit.Test
-import java.util.*
 import kotlin.collections.ArrayList
 
 /**

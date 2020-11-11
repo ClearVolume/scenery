@@ -1,7 +1,7 @@
 package graphics.scenery.tests.unit
 
 import org.joml.Vector3f
-import graphics.scenery.Cone
+import graphics.scenery.mesh.Cone
 import graphics.scenery.Scene
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.LazyLogger

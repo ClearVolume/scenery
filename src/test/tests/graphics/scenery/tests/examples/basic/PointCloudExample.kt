@@ -3,6 +3,10 @@ package graphics.scenery.tests.examples.basic
 import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Light
+import graphics.scenery.mesh.MeshImporter
+import graphics.scenery.mesh.PointCloud
 import graphics.scenery.numerics.Random
 import org.junit.Test
 
@@ -38,9 +42,10 @@ class PointCloudExample : SceneryBase("PointCloudExample") {
 
         scene.addChild(cam)
 
+        val file = TexturedCubeExample::class.java.getResource("models/sphere.obj").file
         val pointCloud = PointCloud()
+        MeshImporter.readFromOBJ(file, importMaterials = false, pointCloud)
         with(pointCloud) {
-            readFromOBJ( TexturedCubeExample::class.java.getResource("models/sphere.obj").file, importMaterials = false)
             name = "Sphere Mesh"
             for(i in 0 until pointCloud.texcoords.limit()) {
                 pointCloud.texcoords.put(i, Random.randomFromRange(10.0f, 25.0f))

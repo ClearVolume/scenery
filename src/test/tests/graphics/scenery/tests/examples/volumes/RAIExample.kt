@@ -4,6 +4,8 @@ import bdv.util.AxisOrder
 import graphics.scenery.*
 import org.joml.Vector3f
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Light
 import graphics.scenery.volumes.TransferFunction
 import graphics.scenery.volumes.Volume
 import ij.IJ

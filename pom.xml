@@ -562,6 +562,13 @@
             <groupId>org.janelia.saalfeldlab</groupId>
             <artifactId>n5-imglib2</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.kotlin-graphics</groupId>
+            <artifactId>assimp</artifactId>
+            <version>a936c79c</version>
+        </dependency>
+
     </dependencies>
 
     <repositories>

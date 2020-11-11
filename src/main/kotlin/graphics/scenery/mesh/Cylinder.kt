@@ -1,5 +1,7 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.BufferUtils
+import graphics.scenery.GeometryType
 import org.joml.Vector3f
 import java.util.*
 import kotlin.math.PI

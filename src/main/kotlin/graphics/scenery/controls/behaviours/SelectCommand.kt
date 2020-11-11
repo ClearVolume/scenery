@@ -1,6 +1,6 @@
 package graphics.scenery.controls.behaviours
 
-import graphics.scenery.BoundingGrid
+import graphics.scenery.mesh.BoundingGrid
 import graphics.scenery.Camera
 import graphics.scenery.Scene
 import graphics.scenery.backends.Renderer
@@ -26,7 +26,8 @@ open class SelectCommand @JvmOverloads constructor(protected val name: String,
                                                    protected val scene: Scene,
                                                    protected val camera: () -> Camera?,
                                                    protected var debugRaycast: Boolean = false,
-                                                   var ignoredObjects: List<Class<*>> = listOf<Class<*>>(BoundingGrid::class.java),
+                                                   var ignoredObjects: List<Class<*>> = listOf<Class<*>>(
+                                                       BoundingGrid::class.java),
                                                    protected var action: ((Scene.RaycastResult, Int, Int) -> Unit) = { _, _, _ -> Unit }) : ClickBehaviour {
     protected val logger by LazyLogger()
 

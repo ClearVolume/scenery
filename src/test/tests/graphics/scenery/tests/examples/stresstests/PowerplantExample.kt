@@ -3,6 +3,9 @@ package graphics.scenery.tests.examples.stresstests
 import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
 import graphics.scenery.numerics.Random
 import org.junit.Test
 import kotlin.concurrent.thread
@@ -52,9 +55,7 @@ class PowerplantExample : SceneryBase("PowerplantExample", windowWidth = 1280, w
             scene.addChild(it)
         }
 
-        val plant = Mesh()
-        with(plant) {
-            readFromOBJ(getDemoFilesPath() + "/powerplant.obj", importMaterials = true)
+        MeshImporter.readFromOBJ(getDemoFilesPath() + "/powerplant.obj", importMaterials = true).apply {
             position = Vector3f(0.0f, 0.0f, 0.0f)
             scale = Vector3f(0.001f, 0.001f, 0.001f)
             material = Material()

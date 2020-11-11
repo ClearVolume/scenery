@@ -2,10 +2,10 @@ package graphics.scenery.controls
 
 import org.joml.Matrix4f
 import org.joml.Vector3f
-import com.jogamp.opengl.math.Quaternion
 import graphics.scenery.*
 import graphics.scenery.backends.Display
 import graphics.scenery.backends.vulkan.*
+import graphics.scenery.mesh.Mesh
 import graphics.scenery.utils.LazyLogger
 import kotlinx.coroutines.*
 import org.joml.Quaternionf

@@ -4,6 +4,9 @@ import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.TrackedStereoGlasses
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
 import graphics.scenery.net.NodePublisher
 import graphics.scenery.net.NodeSubscriber
 import graphics.scenery.utils.extensions.times
@@ -59,13 +62,13 @@ class BileExample: SceneryBase("Bile Canaliculi example") {
             scene.addChild(lights[i])
         }
 
-        val bile = Mesh()
-        bile.readFrom("M:/meshes/adult_mouse_bile_canaliculi_network_2.stl")
-        bile.scale = Vector3f(0.1f, 0.1f, 0.1f)
-        bile.position = Vector3f(-600.0f, -800.0f, -20.0f)
-        bile.material.diffuse = Vector3f(0.8f, 0.5f, 0.5f)
-        bile.material.specular = Vector3f(1.0f, 1.0f, 1.0f)
-        bile.material.roughness = 0.5f
+        val bile = MeshImporter.readFrom("M:/meshes/adult_mouse_bile_canaliculi_network_2.stl").apply {
+            scale = Vector3f(0.1f, 0.1f, 0.1f)
+            position = Vector3f(-600.0f, -800.0f, -20.0f)
+            material.diffuse = Vector3f(0.8f, 0.5f, 0.5f)
+            material.specular = Vector3f(1.0f, 1.0f, 1.0f)
+            material.roughness = 0.5f
+        }
         scene.addChild(bile)
 
 

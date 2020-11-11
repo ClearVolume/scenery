@@ -1,6 +1,7 @@
 package graphics.scenery.tests.unit
 
-import graphics.scenery.Mesh
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
 import graphics.scenery.utils.LazyLogger
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -21,8 +22,7 @@ class MeshTests {
     @Test
     fun testReadFromOBJ() {
         logger.info("Testing mesh creation from OBJ file and bounding box calculation ...")
-        val erythrocyte = Mesh()
-        erythrocyte.readFrom(Mesh::class.java.getResource("models/erythrocyte.obj").file)
+        val erythrocyte = MeshImporter.readFrom(Mesh::class.java.getResource("models/erythrocyte.obj").file)
 
         assertEquals(18000, erythrocyte.vertices.capacity())
         assertEquals(18000, erythrocyte.normals.capacity())
@@ -41,8 +41,7 @@ class MeshTests {
         assertEquals(1.63499f, erythrocyteBoundingBox.max.z())
 
 
-        val leukocyte = Mesh()
-        leukocyte.readFrom(Mesh::class.java.getResource("models/leukocyte.obj").file)
+        val leukocyte = MeshImporter.readFrom(Mesh::class.java.getResource("models/leukocyte.obj").file)
 
         assertEquals(144000, leukocyte.vertices.capacity())
         assertEquals(144000, leukocyte.normals.capacity())
@@ -68,8 +67,7 @@ class MeshTests {
     @Test
     fun testReadFromBinarySTL() {
         logger.info("Testing mesh creation from STL file and bounding box calculation ...")
-        val erythrocyte = Mesh()
-        erythrocyte.readFrom(Mesh::class.java.getResource("models/erythrocyte.stl").file)
+        val erythrocyte = MeshImporter.readFrom(Mesh::class.java.getResource("models/erythrocyte.stl").file)
 
         assertEquals(9000, erythrocyte.vertices.capacity())
         assertEquals(9000, erythrocyte.normals.capacity())
@@ -94,8 +92,7 @@ class MeshTests {
     @Test
     fun testReadFromASCIISTL() {
         logger.info("Testing mesh creation from STL file and bounding box calculation ...")
-        val erythrocyte = Mesh()
-        erythrocyte.readFrom(Mesh::class.java.getResource("models/erythrocyte_ascii.stl").file)
+        val erythrocyte = MeshImporter.readFrom(Mesh::class.java.getResource("models/erythrocyte_ascii.stl").file)
 
         assertEquals(9000, erythrocyte.vertices.capacity())
         assertEquals(9000, erythrocyte.normals.capacity())

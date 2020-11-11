@@ -2,6 +2,8 @@ package graphics.scenery.tests.unit
 
 import org.joml.Vector3f
 import graphics.scenery.*
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.TextBoard
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.LazyLogger
 import org.junit.Test

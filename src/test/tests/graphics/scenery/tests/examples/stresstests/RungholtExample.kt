@@ -4,6 +4,9 @@ import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.OpenVRHMD
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
 import graphics.scenery.numerics.Random
 import org.junit.Test
 import kotlin.concurrent.thread
@@ -54,9 +57,7 @@ class RungholtExample : SceneryBase("RungholtExample", windowWidth = 1280, windo
             scene.addChild(it)
         }
 
-        val rungholtMesh = Mesh()
-        with(rungholtMesh) {
-            readFromOBJ(getDemoFilesPath() + "/rungholt.obj", importMaterials = true)
+        MeshImporter.readFromOBJ(getDemoFilesPath() + "/rungholt.obj", importMaterials = true).apply {
             position = Vector3f(0.0f, 0.0f, 0.0f)
             scale = Vector3f(1.0f, 1.0f, 1.0f)
             updateWorld(true, true)

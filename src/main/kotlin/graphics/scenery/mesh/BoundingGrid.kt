@@ -1,7 +1,7 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.*
 import graphics.scenery.utils.extensions.*
-import graphics.scenery.volumes.Volume
 import org.joml.Vector3f
 import org.joml.Vector4f
 import java.util.*

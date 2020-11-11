@@ -2,7 +2,7 @@ package graphics.scenery.effectors
 
 import org.joml.Vector3f
 import graphics.scenery.Node
-import graphics.scenery.Plane
+import graphics.scenery.mesh.Plane
 
 /**
  * Slicing volume effector

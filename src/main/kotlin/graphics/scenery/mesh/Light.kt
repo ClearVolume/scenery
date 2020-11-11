@@ -1,5 +1,7 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.PointLight
+import graphics.scenery.ShaderProperty
 import graphics.scenery.utils.extensions.plus
 import graphics.scenery.utils.extensions.times
 import org.joml.Vector3f

@@ -1,9 +1,11 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.BufferUtils
+import graphics.scenery.Material
+import graphics.scenery.Node
+import graphics.scenery.OrientedBoundingBox
 import graphics.scenery.utils.extensions.*
 import org.joml.Vector3f
-import java.nio.FloatBuffer
-import java.nio.IntBuffer
 import kotlin.jvm.JvmOverloads
 
 /**

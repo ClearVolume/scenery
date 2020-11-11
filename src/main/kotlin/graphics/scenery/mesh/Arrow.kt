@@ -1,12 +1,12 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.*
 import graphics.scenery.backends.ShaderType
 import graphics.scenery.utils.extensions.minus
 import graphics.scenery.utils.extensions.plus
 import graphics.scenery.utils.extensions.times
 import org.joml.Vector3f
 import org.joml.Vector4f
-import java.nio.FloatBuffer
 import java.nio.IntBuffer
 
 /**
@@ -68,7 +68,8 @@ class Arrow(var vector: Vector3f = Vector3f(0.0f)) : Mesh("Arrow") {
         /** Index buffer */
         indices = IntBuffer.wrap(intArrayOf())
 
-        material = ShaderMaterial.fromClass(Line::class.java, listOf(ShaderType.VertexShader, ShaderType.GeometryShader, ShaderType.FragmentShader))
+        val shaderTypes = listOf(ShaderType.VertexShader, ShaderType.GeometryShader, ShaderType.FragmentShader)
+        material = ShaderMaterial.fromClass(Line::class.java, shaderTypes)
         material.cullingMode = Material.CullingMode.None
 
         reshape(vector)

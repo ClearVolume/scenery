@@ -2,7 +2,7 @@ package graphics.scenery.tests.unit.controls
 
 import com.jogamp.newt.event.KeyEvent
 import com.jogamp.newt.event.MouseEvent
-import graphics.scenery.Box
+import graphics.scenery.mesh.Box
 import graphics.scenery.Hub
 import graphics.scenery.Scene
 import graphics.scenery.Settings

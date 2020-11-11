@@ -5,12 +5,13 @@ import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.InputHandler
 import graphics.scenery.controls.TrackedStereoGlasses
+import graphics.scenery.mesh.Box
+import graphics.scenery.mesh.Light
 import graphics.scenery.net.NodePublisher
 import graphics.scenery.net.NodeSubscriber
 import graphics.scenery.volumes.Volume
 import org.junit.Test
 import org.scijava.ui.behaviour.ClickBehaviour
-import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.concurrent.thread
 

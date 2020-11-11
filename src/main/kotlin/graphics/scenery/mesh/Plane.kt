@@ -1,8 +1,7 @@
-package graphics.scenery
+package graphics.scenery.mesh
 
+import graphics.scenery.BufferUtils
 import org.joml.Vector3f
-import java.nio.FloatBuffer
-import java.nio.IntBuffer
 
 /**
  * Constructs a plane with the dimensions given in [sizes].

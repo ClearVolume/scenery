@@ -12,6 +12,8 @@ import graphics.scenery.backends.vulkan.VU
 import graphics.scenery.backends.vulkan.VulkanDevice
 import graphics.scenery.backends.vulkan.VulkanTexture
 import graphics.scenery.backends.vulkan.endCommandBuffer
+import graphics.scenery.mesh.Mesh
+import graphics.scenery.mesh.MeshImporter
 import graphics.scenery.utils.JsonDeserialisers
 import graphics.scenery.utils.LazyLogger
 import kotlinx.coroutines.GlobalScope
@@ -928,8 +930,7 @@ open class OpenVRHMD(val seated: Boolean = false, val useCompositor: Boolean = t
                     val model = mapper.readValue(json, CompositeModel::class.java)
                     model.components.forEach { (_, component) ->
                         if(component.filename != null) {
-                            val m = Mesh()
-                            m.readFromOBJ(compositeFile.resolveSibling(component.filename).absolutePath, true)
+                            val m = MeshImporter.readFromOBJ(compositeFile.resolveSibling(component.filename).absolutePath, true)
                             mesh.addChild(m)
 
                             if(component.visibility?.getOrDefault("default", true) == false) {
@@ -940,14 +941,14 @@ open class OpenVRHMD(val seated: Boolean = false, val useCompositor: Boolean = t
                 } catch(e: Exception) {
                     logger.error("Exception: $e")
                     logger.info("Loading composite JSON failed, trying to fall back to regular model.")
-                    mesh.readFrom(path)
+                    MeshImporter.readFrom(path, mesh = mesh)
                     e.printStackTrace()
                 }
             }
 
             mesh.name.toLowerCase().endsWith("stl") ||
                 mesh.name.toLowerCase().endsWith("obj") -> {
-                mesh.readFrom(path)
+                MeshImporter.readFrom(path, mesh = mesh)
 
                 if (type == TrackedDeviceType.Controller) {
                     mesh.material.diffuse = Vector3f(0.1f, 0.1f, 0.1f)
