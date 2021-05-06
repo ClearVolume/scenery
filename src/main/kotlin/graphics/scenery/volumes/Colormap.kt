@@ -143,7 +143,9 @@ class Colormap(val buffer: ByteBuffer, val width: Int, val height: Int) {
                 val resource = this::class.java.getResourceAsStream("colormap-$name.png")
                     ?: throw FileNotFoundException("Could not find color map for name $name (colormap-$name.png)")
 
-                return fromStream(resource, "png")
+                val colormap = fromStream(resource, "png")
+                resource.close()
+                return colormap
             }
         }
 

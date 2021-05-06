@@ -8,7 +8,6 @@ import net.imglib2.type.numeric.integer.UnsignedByteType
 import org.joml.Vector3i
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 /**
  * Example demonstrating procedural texturing using [Texture].
@@ -53,14 +52,14 @@ class ProceduralTextureExample : SceneryBase("ProceduralTextureExample") {
             scene.addChild(this)
         }
 
-        thread {
+        animate {
             val imageSizeX = 256
             val imageSizeY = 256
             val imageChannels = 3
             val textureBuffer = BufferUtils.allocateByte(imageSizeX * imageSizeY * imageChannels)
             var ticks = 0L
 
-            while(true) {
+            while(running) {
                 if(box.lock.tryLock(2, TimeUnit.MILLISECONDS)) {
                     box.rotation.rotateY(0.01f)
                     box.needsUpdate = true

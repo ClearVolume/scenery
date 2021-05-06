@@ -1,10 +1,9 @@
 package graphics.scenery.tests.examples.stresstests
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * Stress test generating a lot of spheres
@@ -35,7 +34,7 @@ class LotsOfSpheresExample: SceneryBase("LotsOfSpheres", wantREPL = true) {
             scene.addChild(this)
         }
 
-        thread {
+        animate {
             for(i in 0 until 12000) {
                 val s = Sphere(0.1f, 10)
                 s.position = Random.random3DVectorFromRange(-10.0f, 10.0f)

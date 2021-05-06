@@ -1,6 +1,5 @@
 package graphics.scenery.tests.examples.compute
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.backends.Shaders
@@ -11,10 +10,10 @@ import graphics.scenery.textures.Texture
 import graphics.scenery.utils.Image
 import graphics.scenery.utils.SystemHelpers
 import kotlinx.coroutines.*
+import org.joml.Vector3f
 import org.joml.Vector3i
 import org.lwjgl.system.MemoryUtil
 import org.scijava.ui.behaviour.ClickBehaviour
-import kotlin.concurrent.thread
 
 /**
  * Example showing simple image processing with compute shaders.
@@ -64,14 +63,10 @@ class ComputeShaderExample : SceneryBase("ComputeShaderExample") {
             scene.addChild(this)
         }
 
-        thread {
-            while (running) {
-                box.rotation.rotateY(0.01f)
-                box.needsUpdate = true
-//                box.material.textures["diffuse"] = compute.material.textures["OutputViewport"]!!
-
-                Thread.sleep(20)
-            }
+        animateLoop(20) {
+            box.rotation.rotateY(0.01f)
+            box.needsUpdate = true
+//            box.material.textures["diffuse"] = compute.material.textures["OutputViewport"]!!
         }
     }
 

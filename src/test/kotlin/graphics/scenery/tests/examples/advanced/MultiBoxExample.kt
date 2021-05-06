@@ -1,10 +1,9 @@
 package graphics.scenery.tests.examples.advanced
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * Demo animating multiple boxes without instancing.
@@ -68,13 +67,9 @@ class MultiBoxExample : SceneryBase("MultiBoxExample") {
             scene.addChild(this)
         }
 
-        thread {
-            while (true) {
-                m.rotation.rotateXYZ(0.001f, 0.001f, 0.0f)
-                m.needsUpdate = true
-
-                Thread.sleep(10)
-            }
+        animateLoop(10) {
+            m.rotation.rotateXYZ(0.001f, 0.001f, 0.0f)
+            m.needsUpdate = true
         }
     }
 

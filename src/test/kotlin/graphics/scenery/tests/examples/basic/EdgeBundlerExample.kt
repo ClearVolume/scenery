@@ -1,11 +1,10 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.compute.EdgeBundler
 import graphics.scenery.numerics.Random
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -58,26 +57,20 @@ class EdgeBundlerExample : SceneryBase("EdgeBundlerExample") {
         scene.addChild(cam)
 
         // Light show
-        thread {
-            while(true) {
-                val t = runtime/100.0f
-                lights.forEachIndexed { i, pointLight ->
-                    pointLight.position = Vector3f(
-                        33.0f* sin(2.0f*i*PI/3.0f+t*PI/50.0f).toFloat(),
-                        0.0f,
-                        -33.0f* cos(2.0f*i*PI/3.0f+t*PI/50.0f).toFloat())
-                }
-                Thread.sleep(20)
+        animateLoop(20) {
+            val t = runtime/100.0f
+            lights.forEachIndexed { i, pointLight ->
+                pointLight.position = Vector3f(
+                    33.0f* sin(2.0f*i*PI/3.0f+t*PI/50.0f).toFloat(),
+                    0.0f,
+                    -33.0f* cos(2.0f*i*PI/3.0f+t*PI/50.0f).toFloat())
             }
         }
 
         // Bundling ... de-bundling ... bundling ... de-bundling...
-        thread {
-            while (true) {
-                val t = sin(runtime * PI/2000.0f) * 0.5f + 0.5f
-                scene.children.forEach() { n-> if(n is LinePair) {n.interpolationState = t.toFloat()} }
-                Thread.sleep(20)
-            }
+        animateLoop(20) {
+            val t = sin(runtime * PI/2000.0f) * 0.5f + 0.5f
+            scene.children.forEach() { n-> if(n is LinePair) {n.interpolationState = t.toFloat()} }
         }
     }
 

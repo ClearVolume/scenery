@@ -1,12 +1,11 @@
 package graphics.scenery.tests.examples.advanced
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.RenderConfigReader
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.extensions.minus
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 import kotlin.math.floor
 
 /**
@@ -83,7 +82,7 @@ class CycleRenderQualityExample: SceneryBase("CycleRenderQualityExample", window
         cam.addChild(cameraLight)
 
         var quality = 0
-        thread {
+        animate {
             waitForSceneInitialisation()
 
             while(running) {

@@ -47,6 +47,7 @@ open class MouseAndKeyHandlerBase : ControllerListener, ExtractsNatives {
     private val CONTROLLER_HEARTBEAT = 5L
     private val CONTROLLER_DOWN_THRESHOLD = 0.95f
 
+    @Volatile
     protected var shouldClose = false
 
     /**

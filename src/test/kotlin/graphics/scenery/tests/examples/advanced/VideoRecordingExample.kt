@@ -42,14 +42,10 @@ class VideoRecordingExample: SceneryBase("VideoRecordingExample") {
             scene.addChild(this)
         }
 
-        thread {
-            while (true) {
-                box.rotation.rotateY(Random.randomFromRange(-0.04f, 0.04f))
-                box.rotation.rotateZ(Random.randomFromRange(-0.04f, 0.04f))
-                box.needsUpdate = true
-
-                Thread.sleep(20)
-            }
+        animateLoop(20) {
+            box.rotation.rotateY(Random.randomFromRange(-0.04f, 0.04f))
+            box.rotation.rotateZ(Random.randomFromRange(-0.04f, 0.04f))
+            box.needsUpdate = true
         }
 
         thread {

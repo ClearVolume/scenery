@@ -1,10 +1,9 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * Simple example to demonstrate the drawing of 3D lines.
@@ -15,7 +14,7 @@ import kotlin.concurrent.thread
  *
  * @author Ulrik Günther <hello@ulrik.is>
  */
-class LineExample : SceneryBase("LineExample") {
+class LineExample : SceneryBase("LineExample", wantREPL = false) {
     protected var lineAnimating = true
 
     override fun init() {
@@ -56,29 +55,22 @@ class LineExample : SceneryBase("LineExample") {
 
         scene.addChild(cam)
 
-        thread {
-            while (true) {
-                val t = runtime/100
-                if (lineAnimating) {
-                    line.addPoint(Random.random3DVectorFromRange(-5.0f, 5.0f))
-                    line.edgeWidth = 0.01f * Math.sin(t * Math.PI / 50).toFloat() + 0.015f
-                }
-
-                Thread.sleep(100)
+        animateLoop(100) {
+            val t = runtime / 100
+            if (lineAnimating) {
+                line.addPoint(Random.random3DVectorFromRange(-5.0f, 5.0f))
+                line.edgeWidth = 0.01f * Math.sin(t * Math.PI / 50).toFloat() + 0.015f
             }
+
         }
 
-        thread {
-            while(true) {
-                val t = runtime/100
-                lights.forEachIndexed { i, pointLight ->
-                    pointLight.position = Vector3f(
-                        3.0f*Math.sin(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat(),
-                        0.0f,
-                        -3.0f*Math.cos(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat())
-                }
-
-                Thread.sleep(20)
+        animateLoop(20) {
+            val t = runtime/100
+            lights.forEachIndexed { i, pointLight ->
+                pointLight.position = Vector3f(
+                    3.0f*Math.sin(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat(),
+                    0.0f,
+                    -3.0f*Math.cos(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat())
             }
         }
     }

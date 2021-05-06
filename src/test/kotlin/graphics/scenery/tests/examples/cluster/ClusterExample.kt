@@ -1,6 +1,5 @@
 package graphics.scenery.tests.examples.cluster
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.InputHandler
@@ -12,6 +11,7 @@ import graphics.scenery.utils.extensions.minus
 import graphics.scenery.volumes.Colormap
 import graphics.scenery.volumes.TransferFunction
 import graphics.scenery.volumes.Volume
+import org.joml.Vector3f
 import org.scijava.ui.behaviour.ClickBehaviour
 import java.nio.file.Paths
 import kotlin.concurrent.thread

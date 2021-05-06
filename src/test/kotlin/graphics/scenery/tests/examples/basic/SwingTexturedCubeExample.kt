@@ -1,14 +1,13 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.Image
 import graphics.scenery.utils.SceneryJPanel
+import org.joml.Vector3f
 import java.awt.BorderLayout
 import javax.swing.JFrame
-import kotlin.concurrent.thread
 
 /**
  * TexturedCubeExample, embedded in a Swing window
@@ -60,19 +59,9 @@ class SwingTexturedCubeExample : SceneryBase("SwingTexturedCubeExample", windowW
             scene.addChild(this)
         }
 
-        thread {
-            while (true) {
-                box.rotation.rotateY(0.01f)
-                box.needsUpdate = true
-
-                Thread.sleep(20)
-            }
-        }
-
-        thread {
-            while(renderer?.shouldClose == false) {
-                Thread.sleep(200)
-            }
+        animateLoop(20) {
+            box.rotation.rotateY(0.01f)
+            box.needsUpdate = true
         }
     }
 

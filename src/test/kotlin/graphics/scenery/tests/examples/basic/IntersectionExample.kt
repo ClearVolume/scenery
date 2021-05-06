@@ -1,9 +1,8 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * <Description>
@@ -52,15 +51,11 @@ class IntersectionExample: SceneryBase("IntersectionExample") {
             scene.addChild(this)
         }
 
-        thread {
-            while (true) {
-                if (box.intersects(box2)) {
-                    box.material.diffuse = Vector3f(1.0f, 0.0f, 0.0f)
-                } else {
-                    box.material.diffuse = Vector3f(0.0f, 1.0f, 0.0f)
-                }
-
-                Thread.sleep(20)
+        animateLoop(20) {
+            if (box.intersects(box2)) {
+                box.material.diffuse = Vector3f(1.0f, 0.0f, 0.0f)
+            } else {
+                box.material.diffuse = Vector3f(0.0f, 1.0f, 0.0f)
             }
         }
     }

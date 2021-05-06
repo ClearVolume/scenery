@@ -1,12 +1,11 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
+import org.joml.Vector3f
 import org.joml.Vector4f
 import org.scijava.ui.behaviour.ClickBehaviour
-import kotlin.concurrent.thread
 
 /**
  * Demo loading the Sponza Model, demonstrating multiple moving lights
@@ -69,7 +68,7 @@ class SponzaExample : SceneryBase("SponzaExample", windowWidth = 1280, windowHei
         desc.transparent = 0
         scene.addChild(desc)
 
-        thread {
+        animate {
             var ticks = 0L
             while (true) {
                 if(movingLights) {

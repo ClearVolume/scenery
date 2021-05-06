@@ -789,6 +789,7 @@ open class Mesh(override var name: String = "Mesh") : Node(name), HasGeometry {
             }
 
             fis.close()
+            bis.close()
         }
 
         val arr = CharArray(6)

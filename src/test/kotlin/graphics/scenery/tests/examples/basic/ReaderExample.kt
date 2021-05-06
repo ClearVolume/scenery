@@ -1,6 +1,5 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.OpenVRHMD
@@ -10,6 +9,7 @@ import graphics.scenery.controls.behaviours.ControllerDrag
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.extensions.times
 import graphics.scenery.volumes.Volume
+import org.joml.Vector3f
 import org.scijava.Context
 import org.scijava.ui.UIService
 import org.scijava.ui.behaviour.ClickBehaviour
@@ -109,7 +109,7 @@ class ReaderExample : SceneryBase("ReaderExample", 1280, 720) {
             scene.addChild(this)
         }
 
-        thread {
+        animate {
             while(!loadedObject.initialized) {
                 Thread.sleep(200)
             }

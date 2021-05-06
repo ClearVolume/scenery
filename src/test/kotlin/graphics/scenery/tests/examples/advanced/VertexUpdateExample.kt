@@ -5,7 +5,6 @@ import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import java.nio.FloatBuffer
 import java.util.*
-import kotlin.concurrent.thread
 
 /**
  * <Description>
@@ -53,12 +52,12 @@ class VertexUpdateExample : SceneryBase("VertexUpdateExample") {
         bb.node = sphere
 
         var ticks = 0
-        thread {
+        animate {
             while(!scene.initialized) {
                 Thread.sleep(200)
             }
 
-            while (true) {
+            while (running) {
                 sphere.rotation.rotateY(0.01f)
                 sphere.needsUpdate = true
                 ticks++

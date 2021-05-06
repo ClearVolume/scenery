@@ -4,7 +4,6 @@ import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.utils.extensions.minus
-import kotlin.concurrent.thread
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -111,9 +110,10 @@ class ArrowExample : SceneryBase("ArrowExample") {
 
 
         //finally, have some fun...
-        thread {
+
+        animate {
             var i = 0
-            while (true) {
+            while(running) {
                 al[i].material = matFaint
                 i = (i+1).rem(arrowsInCircle)
                 al[i].material = matBright

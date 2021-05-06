@@ -81,6 +81,7 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
     var updateFunction: (() -> Any)? = null
 
     /** Flag to indicate whether this instance is currently running. */
+    @Volatile
     var running: Boolean = false
         protected set
     /** Total runtime of this instance. */
@@ -93,7 +94,9 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
     protected var accumulator = 0.0f
     protected var currentTime = System.nanoTime()
     protected var t = 0.0f
+    @Volatile
     protected var shouldClose: Boolean = false
+    @Volatile
     protected var gracePeriod = 0
 
     enum class AssertionCheckPoint { BeforeStart, AfterClose }
@@ -128,6 +131,27 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
      */
     open fun inputSetup() {
 
+    }
+
+    /**
+     * Function to run a block in a loop in a daemon thread.
+     */
+    protected fun animate(block: () -> Unit) {
+        thread(isDaemon = true) {
+            block()
+        }
+    }
+
+    /**
+     * Function to run a block in a loop in a daemon thread.
+     */
+    protected fun animateLoop(sleepMillis: Long, block: () -> Unit) {
+        thread(isDaemon = true) {
+            while (running) {
+                block()
+                Thread.sleep(sleepMillis)
+            }
+        }
     }
 
     /**
@@ -267,6 +291,9 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
         while (!shouldClose || gracePeriod > 0) {
             runtime = (System.nanoTime() - startTime) / 1000000f
             settings.set("System.Runtime", runtime)
+            if(renderer?.window?.shouldClose == true && !shouldClose) {
+                close()
+            }
 
             val activeCamera = scene.findObserver() ?: continue
 
@@ -364,6 +391,8 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
             }
         }
 
+        reallyClose()
+
         running = false
         inputHandler?.close()
         renderdoc?.close()
@@ -372,6 +401,8 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
         hub.get<Statistics>()?.close()
 
         hub.get<REPL>()?.close()
+
+        scijavaContext?.dispose()
     }
 
     /**
@@ -422,14 +453,13 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
         shouldClose = true
         gracePeriod = 60
         renderer?.close()
+    }
 
-        while(gracePeriod > 0 || renderer?.initialized == true) {
-            logger.debug("Waiting for grace period to go to 0, current=$gracePeriod")
-            Thread.sleep(100)
-        }
-
+    /**
+     * Sets the shouldClose flag on renderer, causing it to shut down and thereby ending the main loop.
+     */
+    open fun reallyClose() {
         renderer = null
-
         (hub.get(SceneryElement.NodePublisher) as? NodePublisher)?.close()
         (hub.get(SceneryElement.NodeSubscriber) as? NodeSubscriber)?.close()
         (hub.get(SceneryElement.OpenCLContext) as? OpenCLContext)?.close()

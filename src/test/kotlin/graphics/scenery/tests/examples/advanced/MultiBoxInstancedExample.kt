@@ -1,10 +1,9 @@
 package graphics.scenery.tests.examples.advanced
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * Demo animating multiple boxes with instancing.
@@ -79,22 +78,18 @@ class MultiBoxInstancedExample : SceneryBase("MultiBoxInstancedExample") {
 
         scene.addChild(hullbox)
 
-        thread {
-            while (running) {
-                container.rotation.rotateXYZ(0.001f, 0.001f, 0.0f)
-                container.needsUpdateWorld = true
-                container.needsUpdate = true
-                container.updateWorld(true, false)
+        animateLoop(20) {
+            container.rotation.rotateXYZ(0.001f, 0.001f, 0.0f)
+            container.needsUpdateWorld = true
+            container.needsUpdate = true
+            container.updateWorld(true, false)
 
-                val inst = Mesh()
-                inst.instancedProperties["ModelMatrix"] = { inst.world }
-                inst.position = Random.random3DVectorFromRange(-40.0f, 40.0f)
-                inst.parent = container
-                b.instances.add(inst)
-                b.instances.removeAt(kotlin.random.Random.nextInt(b.instances.size - 1))
-
-                Thread.sleep(20)
-            }
+            val inst = Mesh()
+            inst.instancedProperties["ModelMatrix"] = { inst.world }
+            inst.position = Random.random3DVectorFromRange(-40.0f, 40.0f)
+            inst.parent = container
+            b.instances.add(inst)
+            b.instances.removeAt(kotlin.random.Random.nextInt(b.instances.size - 1))
         }
     }
 

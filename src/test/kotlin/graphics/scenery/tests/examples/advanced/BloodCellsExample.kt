@@ -5,7 +5,6 @@ import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.extensions.minus
 import org.joml.Vector3f
-import kotlin.concurrent.thread
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -123,12 +122,12 @@ class BloodCellsExample : SceneryBase("BloodCellsExample", windowWidth = 1280, w
             this.needsUpdate = true
         }
 
-        thread {
+        animate {
             while(!sceneInitialized()) {
                 Thread.sleep(200)
             }
 
-            while(true) {
+            while(running) {
                 erythrocytes.parallelStream().forEach { erythrocyte -> erythrocyte.hoverAndTumble(Random.randomFromRange(0.001f, 0.01f)) }
                 leucocytes.parallelStream().forEach { leucocyte -> leucocyte.hoverAndTumble(0.001f) }
 

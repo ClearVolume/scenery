@@ -1,10 +1,9 @@
 package graphics.scenery.tests.examples.stresstests
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * Stress-testing demo with the PowerPlant model from UNC, and lots of lights.
@@ -63,9 +62,9 @@ class PowerplantExample : SceneryBase("PowerplantExample", windowWidth = 1280, w
             scene.addChild(this)
         }
 
-        thread {
+        animate {
             var ticks = 0L
-            while (true) {
+            while (running) {
                 boxes.mapIndexed {
                     i, box ->
                     val phi = Math.PI * 2.0f * ticks / 2500.0f

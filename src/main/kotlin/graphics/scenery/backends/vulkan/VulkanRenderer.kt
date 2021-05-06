@@ -634,8 +634,7 @@ open class VulkanRenderer(hub: Hub,
 
         heartbeatTimer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                if (window.shouldClose) {
-                    shouldClose = true
+                if (shouldClose) {
                     return
                 }
 
@@ -1511,10 +1510,7 @@ open class VulkanRenderer(hub: Hub,
             return@runBlocking
         }
 
-        if (window.shouldClose) {
-            shouldClose = true
-            // stop all
-            vkDeviceWaitIdle(device.vulkanDevice)
+        if (shouldClose) {
             return@runBlocking
         }
 
@@ -2145,6 +2141,8 @@ open class VulkanRenderer(hub: Hub,
         initialized = false
 
         logger.info("Renderer teardown started.")
+
+        vkDeviceWaitIdle(device.vulkanDevice)
         vkQueueWaitIdle(queue)
 
         logger.debug("Cleaning texture cache...")

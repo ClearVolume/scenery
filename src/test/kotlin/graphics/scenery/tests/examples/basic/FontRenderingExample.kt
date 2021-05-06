@@ -1,10 +1,9 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import org.joml.Vector3f
 import org.joml.Vector4f
-import kotlin.concurrent.thread
 
 /**
  * <Description>
@@ -44,7 +43,7 @@ class FontRenderingExample: SceneryBase("FontRenderingExample", windowWidth = 12
 
         scene.addChild(board)
 
-        thread {
+        animate {
             while(board.dirty) { Thread.sleep(200) }
 
             val text = arrayOf(

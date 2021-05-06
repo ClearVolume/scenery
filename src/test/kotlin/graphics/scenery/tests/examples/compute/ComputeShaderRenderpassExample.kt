@@ -1,12 +1,11 @@
 package graphics.scenery.tests.examples.compute
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.tests.examples.basic.TexturedCubeExample
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.Image
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * Example showing a glitchy compute shader inserted between the HDR and FXAA passes of the
@@ -40,13 +39,9 @@ class ComputeShaderRenderpassExample : SceneryBase("ComputeShaderRenderpassExamp
             scene.addChild(this)
         }
 
-        thread {
-            while (running) {
-                box.rotation.rotateY(0.01f)
-                box.needsUpdate = true
-
-                Thread.sleep(20)
-            }
+        animateLoop(20) {
+            box.rotation.rotateY(0.01f)
+            box.needsUpdate = true
         }
     }
 

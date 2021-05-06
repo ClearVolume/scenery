@@ -195,6 +195,8 @@ class RenderConfigReader {
             }
         }
 
-        return mapper.readValue(stream, RenderConfig::class.java)
+        val readValue = mapper.readValue(stream, RenderConfig::class.java)
+        stream.close()
+        return readValue
     }
 }

@@ -54,7 +54,7 @@ class ARExample: SceneryBase("AR Volume Rendering example", 1280, 720) {
             scene.addChild(light)
         }
 
-        thread {
+        animate {
             while(!scene.initialized) { Thread.sleep(200) }
 
             val volumeSize = 64L
@@ -64,7 +64,7 @@ class ARExample: SceneryBase("AR Volume Rendering example", 1280, 720) {
             var shift = Vector3f(0.0f)
             val shiftDelta = Random.random3DVectorFromRange(-0.5f, 0.5f)
 
-            while(true) {
+            while(running) {
                 val currentBuffer = volumeBuffer.get()
 
                 Volume.generateProceduralVolume(volumeSize, 0.95f, seed = seed,

@@ -1,11 +1,10 @@
 package graphics.scenery.tests.examples.stresstests
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.OpenVRHMD
 import graphics.scenery.numerics.Random
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * Stress-testing demo with the Rungholt model, and even greater number of lights.
@@ -64,9 +63,9 @@ class RungholtExample : SceneryBase("RungholtExample", windowWidth = 1280, windo
             scene.addChild(this)
         }
 
-        thread {
+        animate {
             var ticks = 0L
-            while (true) {
+            while (running) {
                 boxes.mapIndexed {
                     i, box ->
                     val phi = ticks / 1500.0f % (Math.PI * 2.0f)

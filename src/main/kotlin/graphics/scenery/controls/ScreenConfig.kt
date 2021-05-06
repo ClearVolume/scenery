@@ -160,7 +160,9 @@ class ScreenConfig {
                 }
             }
 
-            return mapper.readValue(stream, ScreenConfig.Config::class.java)
+            val readValue = mapper.readValue(stream, ScreenConfig.Config::class.java)
+            stream.close()
+            return readValue
         }
     }
 }

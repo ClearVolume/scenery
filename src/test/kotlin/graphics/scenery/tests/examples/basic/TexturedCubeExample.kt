@@ -1,11 +1,10 @@
 package graphics.scenery.tests.examples.basic
 
-import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.Image
-import kotlin.concurrent.thread
+import org.joml.Vector3f
 
 /**
  * <Description>
@@ -38,7 +37,7 @@ class TexturedCubeExample : SceneryBase("TexturedCubeExample") {
             scene.addChild(this)
         }
 
-        thread {
+        animate {
             while (running) {
                 box.rotation.rotateY(0.01f)
                 box.needsUpdate = true
