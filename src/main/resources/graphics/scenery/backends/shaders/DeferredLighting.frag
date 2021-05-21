@@ -509,6 +509,9 @@ void main()
 
         lightAttenuation = clamp(1.0 - distance*distance/(lightRadius*lightRadius), 0.0, 1.0);
         lightAttenuation *= lightAttenuation;
+    } else if(lightType == 2) {
+        FragColor = vec4(intensity * Albedo.rgb * emissionColor.rgb, 1.0);
+        return;
     } else {
         L = normalize(worldPosition.xyz);
         lightAttenuation = 1.0;

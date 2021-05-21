@@ -30,6 +30,9 @@ class SponzaExample : SceneryBase("SponzaExample", windowWidth = 1280, windowHei
             scene.addChild(this)
         }
 
+        val ambient = AmbientLight(0.05f)
+        scene.addChild(ambient)
+
         val lights = (0 until 128).map {
             Box(Vector3f(0.1f, 0.1f, 0.1f))
         }.map {

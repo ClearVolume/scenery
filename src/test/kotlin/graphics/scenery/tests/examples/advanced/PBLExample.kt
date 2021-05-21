@@ -39,6 +39,9 @@ class PBLExample: SceneryBase("PBLExample", windowWidth = 1280, windowHeight = 7
 
         spheres.forEach { scene.addChild(it) }
 
+        val ambient = AmbientLight(0.5f)
+        scene.addChild(ambient)
+
         val lightbox = Box(Vector3f(25.0f, 25.0f, 25.0f), insideNormals = true)
         lightbox.name = "Lightbox"
         lightbox.material.diffuse = Vector3f(0.1f, 0.1f, 0.1f)

@@ -29,6 +29,9 @@ class RainbowRibbonExample: SceneryBase("RainbowRibbon", windowWidth = 1280, win
 
         scene.addChild(ribbon)
 
+        val ambient = AmbientLight()
+        scene.addChild(ambient)
+
         val lightbox = Box(Vector3f(500.0f, 500.0f, 500.0f), insideNormals = true)
         lightbox.name = "Lightbox"
         lightbox.material.diffuse = Vector3f(0.1f, 0.1f, 0.1f)

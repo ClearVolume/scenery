@@ -16,7 +16,8 @@ abstract class Light(name: String = "Light") : Mesh(name) {
     /** Enum class to determine light type. */
     enum class LightType {
         PointLight,
-        DirectionalLight
+        DirectionalLight,
+        AmbientLight
     }
 
     /** Emission color of the light. */
