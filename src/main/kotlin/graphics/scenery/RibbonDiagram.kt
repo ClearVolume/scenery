@@ -502,9 +502,9 @@ class RibbonDiagram(val protein: Protein, private val displaySS: Boolean = false
          * and the last residue, hence, this function.
          */
         private fun Vector3f.randomFromVector(): Vector3f {
-            return Vector3f(Random.randomFromRange(this.x() - 1f, this.x() + 1f),
-                    Random.randomFromRange(this.y() - 1f, this.y() + 1f),
-                    Random.randomFromRange(this.z() - 1f, this.z() + 1f))
+            return Vector3f(Random.randomFromRange(this.x() - 0.1f, this.x() + 0.1f),
+                    Random.randomFromRange(this.y() - 0.1f, this.y() + 0.1f),
+                    Random.randomFromRange(this.z() - 0.1f, this.z() + 0.1f))
         }
     }
 
