@@ -41,7 +41,9 @@ class ClusterExample: SceneryBase("Clustered Volume Rendering example") {
         val cam: Camera = DetachedHeadCamera(hmd)
         with(cam) {
             //position = Vector3f(.4f, .4f, 1.4f)
-            position = Vector3f(.0f, 0f, 0f)
+            cam.spatial {
+                position = Vector3f(.0f, 0f, 0f)
+            }
             perspectiveCamera(50.0f, windowWidth, windowHeight)
 
             scene.addChild(this)
@@ -54,18 +56,22 @@ class ClusterExample: SceneryBase("Clustered Volume Rendering example") {
                 it % 3 == 0 -> Cone(0.1f, 0.2f, 10)
                 else -> Icosphere(0.1f, 2)
             }
-            s.position = Vector3f(
-                floor(it / rowSize),
-                (it % rowSize.toInt()).toFloat(),
-                0.0f)
-            s.position = s.position - Vector3f(
-                (rowSize - 1.0f)/4.0f,
-                (rowSize - 1.0f)/4.0f,
-                0.0f)
+            s.spatial {
+                position = Vector3f(
+                    floor(it / rowSize),
+                    (it % rowSize.toInt()).toFloat(),
+                    0.0f)
+                position = position - Vector3f(
+                    (rowSize - 1.0f)/4.0f,
+                    (rowSize - 1.0f)/4.0f,
+                    0.0f)
+            }
 
-            s.material.roughness = (it / rowSize)/rowSize
-            s.material.metallic = (it % rowSize.toInt())/rowSize
-            s.material.diffuse = Random.random3DVectorFromRange(0.5f, 1.0f)
+            s.material {
+                roughness = (it / rowSize)/rowSize
+                metallic = (it % rowSize.toInt())/rowSize
+                diffuse = Random.random3DVectorFromRange(0.5f, 1.0f)
+            }
 
             scene.addChild(s)
             s
@@ -74,7 +80,7 @@ class ClusterExample: SceneryBase("Clustered Volume Rendering example") {
         val lights = Light.createLightTetrahedron<PointLight>(spread = 2.0f, radius = 20.0f)
         lights.forEach { scene.addChild(it) }
         val l = PointLight(5.0f)
-        l.position = Vector3f(0.0f, 2.0f, 2.0f)
+        l.spatial().position = Vector3f(0.0f, 2.0f, 2.0f)
         scene.addChild(l)
 
         spheres.forEach { publishedNodes.add(it) }

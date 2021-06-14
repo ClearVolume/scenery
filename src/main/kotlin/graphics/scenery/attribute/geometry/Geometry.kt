@@ -1,6 +1,7 @@
-package graphics.scenery.geometry
+package graphics.scenery.attribute.geometry
 
-import graphics.scenery.BufferUtils
+import graphics.scenery.*
+import graphics.scenery.geometry.GeometryType
 import graphics.scenery.utils.extensions.minus
 import org.joml.Vector3f
 import java.io.Serializable
@@ -14,11 +15,11 @@ import java.util.*
  *
  * @author Ulrik Günther <hello@ulrik.is>
  */
-interface HasGeometry : Serializable {
+interface Geometry : Serializable {
     /** How many elements does a vertex store? */
-    val vertexSize: Int
+    var vertexSize: Int
     /** How many elements does a texture coordinate store? */
-    val texcoordSize: Int
+    var texcoordSize: Int
     /** The [GeometryType] of the [Node] */
     var geometryType: GeometryType
 
@@ -30,6 +31,10 @@ interface HasGeometry : Serializable {
     var texcoords: FloatBuffer
     /** Array of the indices to create an indexed mesh. Optional, but advisable to use to minimize the number of submitted vertices. */
     var indices: IntBuffer
+    /** Whether the object is dirty and somehow needs to be updated. Used by renderers. */
+    var dirty: Boolean
+
+    fun generateBoundingBox(children: List<Node>): OrientedBoundingBox?
 
     /**
      * Recalculates normals, assuming CCW winding order and taking

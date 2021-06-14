@@ -53,10 +53,12 @@ open class MouseDragSphere(
 
                 val movement = newHit - currentHit
 
-                val newPos = it.position + movement / it.worldScale()
+                it.ifSpatial {
+                    val newPos = position + movement / worldScale()
 
-                currentNode?.position = newPos
-                currentHit = newHit
+                    currentNode?.spatialOrNull()?.position = newPos
+                    currentHit = newHit
+                }
             }
         }
     }

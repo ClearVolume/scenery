@@ -7,6 +7,7 @@ import graphics.scenery.compute.EdgeBundler
 import graphics.scenery.numerics.Random
 import graphics.scenery.primitives.Line
 import graphics.scenery.primitives.LinePair
+import graphics.scenery.attribute.material.Material
 import kotlin.concurrent.thread
 import kotlin.math.PI
 import kotlin.math.cos
@@ -31,9 +32,11 @@ class EdgeBundlerExample : SceneryBase("EdgeBundlerExample") {
         val colorMap = Array(eb.numberOfClusters) { Random.random3DVectorFromRange(0.2f, 0.8f) }
 
         eb.getLinePairsAndClusters().forEach { (track, clusterId) ->
-            track.material.ambient = colorMap[clusterId]
-            track.material.diffuse = colorMap[clusterId]
-            track.material.specular = colorMap[clusterId]
+            track.material {
+                ambient = colorMap[clusterId]
+                diffuse = colorMap[clusterId]
+                specular = colorMap[clusterId]
+            }
             scene.addChild(track)
         }
     }
@@ -43,8 +46,10 @@ class EdgeBundlerExample : SceneryBase("EdgeBundlerExample") {
      */
     private fun initScene() {
         val hull = Box(Vector3f(250.0f, 250.0f, 250.0f), insideNormals = true)
-        hull.material.diffuse = Vector3f(0.2f, 0.2f, 0.2f)
-        hull.material.cullingMode = Material.CullingMode.Front
+        hull.material {
+            diffuse = Vector3f(0.2f, 0.2f, 0.2f)
+            cullingMode = Material.CullingMode.Front
+        }
         scene.addChild(hull)
         val lights = (0 until 3).map {
             val l = PointLight(radius = 150.0f)
@@ -55,7 +60,9 @@ class EdgeBundlerExample : SceneryBase("EdgeBundlerExample") {
         }
 
         val cam: Camera = DetachedHeadCamera()
-        cam.position = Vector3f(0.0f, -2.0f, 15.0f)
+        cam.spatial {
+            position = Vector3f(0.0f, -2.0f, 15.0f)
+        }
         cam.perspectiveCamera(50.0f, windowWidth, windowHeight)
         scene.addChild(cam)
 
@@ -64,7 +71,7 @@ class EdgeBundlerExample : SceneryBase("EdgeBundlerExample") {
             while(true) {
                 val t = runtime/100.0f
                 lights.forEachIndexed { i, pointLight ->
-                    pointLight.position = Vector3f(
+                    pointLight.spatial().position = Vector3f(
                         33.0f* sin(2.0f*i*PI/3.0f+t*PI/50.0f).toFloat(),
                         0.0f,
                         -33.0f* cos(2.0f*i*PI/3.0f+t*PI/50.0f).toFloat())

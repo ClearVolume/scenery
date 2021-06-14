@@ -39,7 +39,7 @@ open class ArcballCameraControl(private val name: String, camera: () -> Camera?,
         set(value) {
             field = value
 
-            cam?.let { node -> node.position = target.invoke() + node.forward * value * (-1.0f) }
+            cam?.let { node -> node.spatialOrNull()?.position = target.invoke() + node.forward * value * (-1.0f) }
         }
 
     /** multiplier for zooming in and out */
@@ -121,10 +121,12 @@ open class ArcballCameraControl(private val name: String, camera: () -> Camera?,
             val yawQ = Quaternionf().rotateXYZ(0.0f, frameYaw, 0.0f).normalize()
             val pitchQ = Quaternionf().rotateXYZ(framePitch, 0.0f, 0.0f).normalize()
 
-            distance = (target.invoke() - node.position).length()
-            node.target = target.invoke()
-            node.rotation = pitchQ.mul(node.rotation).mul(yawQ).normalize()
-            node.position = target.invoke() + node.forward * distance * (-1.0f)
+            node.ifSpatial {
+                distance = (target.invoke() - position).length()
+                node.target = target.invoke()
+                rotation = pitchQ.mul(rotation).mul(yawQ).normalize()
+                position = target.invoke() + node.forward * distance * (-1.0f)
+            }
 
             node.lock.unlock()
         }
@@ -145,13 +147,13 @@ open class ArcballCameraControl(private val name: String, camera: () -> Camera?,
             return
         }
 
-        distance = (target.invoke() - cam!!.position).length()
+        distance = (target.invoke() - cam!!.spatial().position).length()
         distance += wheelRotation.toFloat() * scrollSpeedMultiplier
 
         if (distance >= maximumDistance) distance = maximumDistance
         if (distance <= minimumDistance) distance = minimumDistance
 
-        cam?.let { node -> node.position = target.invoke() + node.forward * distance * (-1.0f) }
+        cam?.let { node -> node.spatialOrNull()?.position = target.invoke() + node.forward * distance * (-1.0f) }
     }
 
 }

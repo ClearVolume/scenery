@@ -28,7 +28,9 @@ class RungholtExample : SceneryBase("RungholtExample", windowWidth = 1280, windo
         val cam: Camera = DetachedHeadCamera(hmd)
         with(cam) {
             perspectiveCamera(50.0f, windowWidth, windowHeight, nearPlaneLocation = 0.5f, farPlaneLocation = 1000.0f)
-            position = Vector3f(0.0f, 50.0f, -100.0f)
+            spatial {
+                position = Vector3f(0.0f, 50.0f, -100.0f)
+            }
             scene.addChild(this)
         }
 
@@ -41,14 +43,13 @@ class RungholtExample : SceneryBase("RungholtExample", windowWidth = 1280, windo
         }
 
         boxes.mapIndexed { i, box ->
-            box.material = Material()
             box.addChild(lights[i])
             scene.addChild(box)
         }
 
         lights.map {
             it.emissionColor = Random.random3DVectorFromRange(0.0f, 1.0f)
-            it.parent?.material?.diffuse = it.emissionColor
+            it.parent?.materialOrNull()?.diffuse = it.emissionColor
             it.intensity = Random.randomFromRange(0.1f, 10f)
 
             scene.addChild(it)
@@ -57,9 +58,11 @@ class RungholtExample : SceneryBase("RungholtExample", windowWidth = 1280, windo
         val rungholtMesh = Mesh()
         with(rungholtMesh) {
             readFromOBJ(getDemoFilesPath() + "/rungholt.obj", importMaterials = true)
-            position = Vector3f(0.0f, 0.0f, 0.0f)
-            scale = Vector3f(1.0f, 1.0f, 1.0f)
-            updateWorld(true, true)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 0.0f)
+                scale = Vector3f(1.0f, 1.0f, 1.0f)
+                updateWorld(true, true)
+            }
             name = "rungholt"
 
             scene.addChild(this)
@@ -72,11 +75,13 @@ class RungholtExample : SceneryBase("RungholtExample", windowWidth = 1280, windo
                     i, box ->
                     val phi = ticks / 1500.0f % (Math.PI * 2.0f)
 
-                    box.position = Vector3f(
-                        -320.0f + 5.0f * (i + 1),
-                        15.0f + i * 0.2f,
-                        250.0f * Math.cos(phi + (i * 0.2f)).toFloat())
-                    box.children[0].position = box.position
+                    box.spatial {
+                        position = Vector3f(
+                            -320.0f + 5.0f * (i + 1),
+                            15.0f + i * 0.2f,
+                            250.0f * Math.cos(phi + (i * 0.2f)).toFloat())
+                        box.children[0].spatialOrNull()?.position = position
+                    }
 
                 }
 

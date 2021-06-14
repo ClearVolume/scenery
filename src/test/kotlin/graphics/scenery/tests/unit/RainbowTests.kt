@@ -34,7 +34,7 @@ class RainbowTests {
         val rainbowPalette = rainbowPaletteNotScaled.map { it.mul(1/255f) }
         val children = child2.children
         for(j in 0 until 6) {
-            assertEquals(children[j].material.diffuse, rainbowPalette[j])
+            assertEquals(children[j].materialOrNull()?.diffuse, rainbowPalette[j])
         }
     }
 }

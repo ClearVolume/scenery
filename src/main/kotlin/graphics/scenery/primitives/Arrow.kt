@@ -3,6 +3,8 @@ package graphics.scenery.primitives
 import graphics.scenery.*
 import graphics.scenery.backends.ShaderType
 import graphics.scenery.geometry.GeometryType
+import graphics.scenery.attribute.geometry.Geometry
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.utils.extensions.minus
 import graphics.scenery.utils.extensions.plus
 import graphics.scenery.utils.extensions.times
@@ -59,22 +61,26 @@ class Arrow(var vector: Vector3f = Vector3f(0.0f)) : Mesh("Arrow") {
     private val zeroGLvec = Vector3f(0.0f, 0.0f, 0.0f)
 
     init {
-        /** Geometry type -- Default for Line is [GeometryType.LINE] */
-        geometryType = GeometryType.LINE_STRIP_ADJACENCY
-        /** Vertex buffer */
-        vertices = BufferUtils.allocateFloat(30)
-        /** Normal buffer */
-        normals = BufferUtils.allocateFloat(30)
-        /** Texcoord buffer */
-        texcoords = BufferUtils.allocateFloat(20)
-        /** Index buffer */
-        indices = IntBuffer.wrap(intArrayOf())
+        geometry {
+            /** Geometry type -- Default for Line is [GeometryType.LINE] */
+            geometryType = GeometryType.LINE_STRIP_ADJACENCY
+            /** Vertex buffer */
+            vertices = BufferUtils.allocateFloat(30)
+            /** Normal buffer */
+            normals = BufferUtils.allocateFloat(30)
+            /** Texcoord buffer */
+            texcoords = BufferUtils.allocateFloat(20)
+            /** Index buffer */
+            indices = IntBuffer.wrap(intArrayOf())
 
-        material = ShaderMaterial.fromClass(
+        }
+        setMaterial(ShaderMaterial.fromClass(
             Line::class.java,
             listOf(ShaderType.VertexShader, ShaderType.GeometryShader, ShaderType.FragmentShader)
-        )
-        material.cullingMode = Material.CullingMode.None
+        )) {
+            cullingMode = Material.CullingMode.None
+        }
+
 
         reshape(vector)
     }
@@ -85,49 +91,52 @@ class Arrow(var vector: Vector3f = Vector3f(0.0f)) : Mesh("Arrow") {
      * @param vector The vector defining the shape of the arrow
      */
     fun reshape(vector: Vector3f) {
-        //init the data structures
-        clearPoints()
+        geometry {
+            //init the data structures
+            clearPoints()
 
-        /** create the vector shape */
-        //first of the two mandatory surrounding fake points that are never displayed
-        addPoint(zeroGLvec)
+            /** create the vector shape */
+            //first of the two mandatory surrounding fake points that are never displayed
+            addPoint(zeroGLvec)
 
-        //the main "vertical" segment of the vector
-        addPoint(zeroGLvec)
-        addPoint(vector)
+            //the main "vertical" segment of the vector
+            addPoint(zeroGLvec)
+            addPoint(vector)
 
-        //the "horizontal" base segment of the "arrow head" triangles
-        var base = if (vector.x() == 0.0f && vector.y() == 0.0f) {
-            //the input 'vector' must be parallel to the z-axis,
-            //we can use this particular 'base' then
-            Vector3f(0.0f, 1.0f, 0.0f)
+            //the "horizontal" base segment of the "arrow head" triangles
+            var base = if (vector.x() == 0.0f && vector.y() == 0.0f) {
+                //the input 'vector' must be parallel to the z-axis,
+                //we can use this particular 'base' then
+                Vector3f(0.0f, 1.0f, 0.0f)
+            }
+            else {
+                //vector 'base' is perpendicular to the input 'vector'
+                Vector3f(-vector.y(), vector.x(), 0.0f).normalize()
+            }
+
+            //the width of the "arrow head" triangle
+            val v = 0.1f * vector.length()
+
+            //the first triangle:
+            base = base * v
+            addPoint(vector.times(0.8f).plus(base))
+            addPoint(vector.times(0.8f).minus(base))
+            addPoint(vector)
+            //NB: the 0.8f defines the height (1-0.8) of the "arrow head" triangle
+
+            //the second triangle:
+            base = base.cross(vector).normalize().times(v)
+            addPoint(vector.times(0.8f).plus(base))
+            addPoint(vector.times(0.8f).minus(base))
+            addPoint(vector)
+
+            //second of the two mandatory surrounding fake points that are never displayed
+            addPoint(vector)
         }
-        else {
-            //vector 'base' is perpendicular to the input 'vector'
-            Vector3f(-vector.y(), vector.x(), 0.0f).normalize()
-        }
-
-        //the width of the "arrow head" triangle
-        val v = 0.1f * vector.length()
-
-        //the first triangle:
-        base = base * v
-        addPoint(vector.times(0.8f).plus(base))
-        addPoint(vector.times(0.8f).minus(base))
-        addPoint(vector)
-        //NB: the 0.8f defines the height (1-0.8) of the "arrow head" triangle
-
-        //the second triangle:
-        base = base.cross(vector).normalize().times(v)
-        addPoint(vector.times(0.8f).plus(base))
-        addPoint(vector.times(0.8f).minus(base))
-        addPoint(vector)
-
-        //second of the two mandatory surrounding fake points that are never displayed
-        addPoint(vector)
+        boundingBox = generateBoundingBox()
     }
 
-    private fun addPoint(p: Vector3f) {
+    private fun Geometry.addPoint(p: Vector3f) {
         vertices.position(vertices.limit())
         vertices.limit(vertices.limit() + 3)
         p.get(vertices)
@@ -148,11 +157,9 @@ class Arrow(var vector: Vector3f = Vector3f(0.0f)) : Mesh("Arrow") {
 
         dirty = true
         vertexCount = vertices.limit()/vertexSize
-
-        boundingBox = generateBoundingBox()
     }
 
-    private fun clearPoints() {
+    private fun Geometry.clearPoints() {
         vertices.clear()
         normals.clear()
         texcoords.clear()

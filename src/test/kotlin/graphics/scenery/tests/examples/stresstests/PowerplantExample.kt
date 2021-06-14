@@ -24,7 +24,9 @@ class PowerplantExample : SceneryBase("PowerplantExample", windowWidth = 1280, w
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 0.0f, 0.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 0.0f)
+            }
             perspectiveCamera(50.0f, windowWidth, windowHeight, nearPlaneLocation = 0.5f, farPlaneLocation = 1000.0f)
 
             scene.addChild(this)
@@ -39,14 +41,13 @@ class PowerplantExample : SceneryBase("PowerplantExample", windowWidth = 1280, w
         }
 
         boxes.mapIndexed { i, box ->
-            box.material = Material()
             box.addChild(lights[i])
             scene.addChild(box)
         }
 
         lights.map {
             it.emissionColor = Random.random3DVectorFromRange(0.0f, 1.0f)
-            it.parent?.material?.diffuse = it.emissionColor
+            it.parent?.materialOrNull()?.diffuse = it.emissionColor
             it.intensity = Random.randomFromRange(0.01f, 10f)
 
             scene.addChild(it)
@@ -55,10 +56,11 @@ class PowerplantExample : SceneryBase("PowerplantExample", windowWidth = 1280, w
         val plant = Mesh()
         with(plant) {
             readFromOBJ(getDemoFilesPath() + "/powerplant.obj", importMaterials = true)
-            position = Vector3f(0.0f, 0.0f, 0.0f)
-            scale = Vector3f(0.001f, 0.001f, 0.001f)
-            material = Material()
-            updateWorld(true, true)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 0.0f)
+                scale = Vector3f(0.001f, 0.001f, 0.001f)
+                updateWorld(true, true)
+            }
             name = "rungholt"
 
             scene.addChild(this)
@@ -71,12 +73,14 @@ class PowerplantExample : SceneryBase("PowerplantExample", windowWidth = 1280, w
                     i, box ->
                     val phi = Math.PI * 2.0f * ticks / 2500.0f
 
-                    box.position = Vector3f(
-                        -128.0f + 18.0f * (i + 1),
-                        5.0f + i * 5.0f,
-                        (i + 1) * 50 * Math.cos(phi + (i * 0.2f)).toFloat())
+                    box.spatial {
+                        position = Vector3f(
+                            -128.0f + 18.0f * (i + 1),
+                            5.0f + i * 5.0f,
+                            (i + 1) * 50 * Math.cos(phi + (i * 0.2f)).toFloat())
 
-                    box.children[0].position = box.position
+                        box.children[0].spatialOrNull()?.position = position
+                    }
 
                 }
 

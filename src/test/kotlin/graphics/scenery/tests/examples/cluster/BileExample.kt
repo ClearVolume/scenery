@@ -7,6 +7,7 @@ import graphics.scenery.controls.TrackedStereoGlasses
 import graphics.scenery.net.NodePublisher
 import graphics.scenery.net.NodeSubscriber
 import graphics.scenery.Mesh
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.utils.extensions.times
 
 /**
@@ -29,17 +30,21 @@ class BileExample: SceneryBase("Bile Canaliculi example") {
 
         val cam: Camera = DetachedHeadCamera(hmd)
         with(cam) {
-            position = Vector3f(.0f, -0.4f, 5.0f)
+            spatial {
+                position = Vector3f(.0f, -0.4f, 5.0f)
+            }
             perspectiveCamera(50.0f, windowWidth, windowHeight)
 
             scene.addChild(this)
         }
 
         val shell = Box(Vector3f(120.0f, 120.0f, 120.0f), insideNormals = true)
-        shell.material.cullingMode = Material.CullingMode.Front
-        shell.material.diffuse = Vector3f(0.0f, 0.0f, 0.0f)
-        shell.material.specular = Vector3f(0.0f)
-        shell.material.ambient = Vector3f(0.0f)
+        shell.material {
+            cullingMode = Material.CullingMode.Front
+            diffuse = Vector3f(0.0f, 0.0f, 0.0f)
+            specular = Vector3f(0.0f)
+            ambient = Vector3f(0.0f)
+        }
         scene.addChild(shell)
 
         val lights = (0..4).map {
@@ -53,7 +58,7 @@ class BileExample: SceneryBase("Bile Canaliculi example") {
             Vector3f(0.0f,-1.0f,1.0f/Math.sqrt(2.0).toFloat()))
 
         tetrahedron.mapIndexed { i, position ->
-            lights[i].position = position * 50.0f
+            lights[i].spatial().position = position * 50.0f
             lights[i].emissionColor = Vector3f(1.0f, 0.5f,0.3f)//Random.random3DVectorFromRange(0.2f, 0.8f)
             lights[i].intensity = 200.2f
             scene.addChild(lights[i])
@@ -61,11 +66,15 @@ class BileExample: SceneryBase("Bile Canaliculi example") {
 
         val bile = Mesh()
         bile.readFrom("M:/meshes/adult_mouse_bile_canaliculi_network_2.stl")
-        bile.scale = Vector3f(0.1f, 0.1f, 0.1f)
-        bile.position = Vector3f(-600.0f, -800.0f, -20.0f)
-        bile.material.diffuse = Vector3f(0.8f, 0.5f, 0.5f)
-        bile.material.specular = Vector3f(1.0f, 1.0f, 1.0f)
-        bile.material.roughness = 0.5f
+        bile.spatial {
+            scale = Vector3f(0.1f, 0.1f, 0.1f)
+            position = Vector3f(-600.0f, -800.0f, -20.0f)
+        }
+        bile.material {
+            diffuse = Vector3f(0.8f, 0.5f, 0.5f)
+            specular = Vector3f(1.0f, 1.0f, 1.0f)
+            roughness = 0.5f
+        }
         scene.addChild(bile)
 
 

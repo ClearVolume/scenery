@@ -27,65 +27,67 @@ class Cone(val radius: Float, val height: Float, val segments: Int, axis: Vector
     val axis: Vector3f = Vector3f(axis).normalize()
 
     init {
-        vertices = BufferUtils.allocateFloat(2 * 3 * segments * 3)
-        normals = BufferUtils.allocateFloat(2 * 3 * segments * 3)
-        texcoords = BufferUtils.allocateFloat(2 * 2 * segments * 3)
+        geometry {
+            vertices = BufferUtils.allocateFloat(2 * 3 * segments * 3)
+            normals = BufferUtils.allocateFloat(2 * 3 * segments * 3)
+            texcoords = BufferUtils.allocateFloat(2 * 2 * segments * 3)
 
-        val vbuffer = ArrayList<Vector3f>(segments * segments * 2 * 3)
-        val nbuffer = ArrayList<Vector3f>(segments * segments * 2 * 3)
-        val tbuffer = ArrayList<Vector2f>(segments * segments * 2 * 2)
+            val vbuffer = ArrayList<Vector3f>(segments * segments * 2 * 3)
+            val nbuffer = ArrayList<Vector3f>(segments * segments * 2 * 3)
+            val tbuffer = ArrayList<Vector2f>(segments * segments * 2 * 2)
 
-        val apex = axis * height
-        val center = apex - axis * height
+            val apex = axis * height
+            val center = apex - axis * height
 
-        val e0 = perp(axis)
-        val e1 = Vector3f(e0).cross(axis)
+            val e0 = perp(axis)
+            val e1 = Vector3f(e0).cross(axis)
 
-        // cone is split into [segments] sections
-        val delta = 2.0f/segments * PI.toFloat()
+            // cone is split into [segments] sections
+            val delta = 2.0f/segments * PI.toFloat()
 
-        // draw cone by creating triangles between adjacent points on the
-        // base and connecting one triangle to the apex, and one to the center
-        for (i in 0 until segments) {
-            val rad = delta * i
-            val rad2 = delta * (i + 1)
-            val v1 = center + (e0 * cos(rad) + e1 * sin(rad)) * radius
-            val v2 = center + (e0 * cos(rad2) + e1 * sin(rad2)) * radius
+            // draw cone by creating triangles between adjacent points on the
+            // base and connecting one triangle to the apex, and one to the center
+            for (i in 0 until segments) {
+                val rad = delta * i
+                val rad2 = delta * (i + 1)
+                val v1 = center + (e0 * cos(rad) + e1 * sin(rad)) * radius
+                val v2 = center + (e0 * cos(rad2) + e1 * sin(rad2)) * radius
 
-            vbuffer.add(v1)
-            vbuffer.add(apex)
-            vbuffer.add(v2)
+                vbuffer.add(v1)
+                vbuffer.add(apex)
+                vbuffer.add(v2)
 
-            vbuffer.add(v2)
-            vbuffer.add(center)
-            vbuffer.add(v1)
+                vbuffer.add(v2)
+                vbuffer.add(center)
+                vbuffer.add(v1)
 
-            val normalSide = (apex - v2).cross(v2 - v1).normalize()
-            val normalBottom = axis * (-1.0f)
-            nbuffer.add(normalSide)
-            nbuffer.add(normalSide)
-            nbuffer.add(normalSide)
+                val normalSide = (apex - v2).cross(v2 - v1).normalize()
+                val normalBottom = axis * (-1.0f)
+                nbuffer.add(normalSide)
+                nbuffer.add(normalSide)
+                nbuffer.add(normalSide)
 
-            nbuffer.add(normalBottom)
-            nbuffer.add(normalBottom)
-            nbuffer.add(normalBottom)
+                nbuffer.add(normalBottom)
+                nbuffer.add(normalBottom)
+                nbuffer.add(normalBottom)
 
-            tbuffer.add(Vector2f(cos(rad) * 0.5f + 0.5f, sin(rad) * 0.5f + 0.5f))
-            tbuffer.add(Vector2f(0.5f, 0.5f))
-            tbuffer.add(Vector2f(cos(rad2) * 0.5f + 0.5f, sin(rad2) * 0.5f + 0.5f))
+                tbuffer.add(Vector2f(cos(rad) * 0.5f + 0.5f, sin(rad) * 0.5f + 0.5f))
+                tbuffer.add(Vector2f(0.5f, 0.5f))
+                tbuffer.add(Vector2f(cos(rad2) * 0.5f + 0.5f, sin(rad2) * 0.5f + 0.5f))
 
-            tbuffer.add(Vector2f(cos(rad2) * 0.5f + 0.5f, sin(rad2) * 0.5f + 0.5f))
-            tbuffer.add(Vector2f(0.5f, 0.5f))
-            tbuffer.add(Vector2f(cos(rad) * 0.5f + 0.5f, sin(rad) * 0.5f + 0.5f))
+                tbuffer.add(Vector2f(cos(rad2) * 0.5f + 0.5f, sin(rad2) * 0.5f + 0.5f))
+                tbuffer.add(Vector2f(0.5f, 0.5f))
+                tbuffer.add(Vector2f(cos(rad) * 0.5f + 0.5f, sin(rad) * 0.5f + 0.5f))
+            }
+
+            vbuffer.forEach { v -> v.get(vertices).position(vertices.position() + 3) }
+            nbuffer.forEach { n -> n.get(normals).position(normals.position() + 3) }
+            tbuffer.forEach { uv -> uv.get(texcoords).position(texcoords.position() + 2) }
+
+            vertices.flip()
+            normals.flip()
+            texcoords.flip()
         }
-
-        vbuffer.forEach { v -> v.get(vertices).position(vertices.position() + 3) }
-        nbuffer.forEach { n -> n.get(normals).position(normals.position() + 3) }
-        tbuffer.forEach { uv -> uv.get(texcoords).position(texcoords.position() + 2) }
-
-        vertices.flip()
-        normals.flip()
-        texcoords.flip()
 
         boundingBox = generateBoundingBox()
     }

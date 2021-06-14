@@ -97,9 +97,11 @@ open class Sphere(val radius: Float, val segments: Int) : Mesh("sphere") {
             }
         }
 
-        vertices = BufferUtils.allocateFloatAndPut(vbuffer.toFloatArray())
-        normals = BufferUtils.allocateFloatAndPut(nbuffer.toFloatArray())
-        texcoords = BufferUtils.allocateFloatAndPut(tbuffer.toFloatArray())
+        geometry {
+            vertices = BufferUtils.allocateFloatAndPut(vbuffer.toFloatArray())
+            normals = BufferUtils.allocateFloatAndPut(nbuffer.toFloatArray())
+            texcoords = BufferUtils.allocateFloatAndPut(tbuffer.toFloatArray())
+        }
 
         boundingBox = generateBoundingBox()
     }

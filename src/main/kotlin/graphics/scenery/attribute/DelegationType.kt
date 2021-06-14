@@ -1,4 +1,4 @@
-package graphics.scenery
+package graphics.scenery.attribute
 
 /**
  * Delegation type class.
@@ -15,12 +15,3 @@ enum class DelegationType {
     /** Will render for each node independent of referring to the same delegate. */
     ForEachNode
 }
-
-/**
- * Node type that enables delegation of rendering. For rendering, not the node itself will be drawn,
- * but the node referred as [delegate]. A [delegationType] can be selected to choose whether the delegate
- * will be drawn for all nodes that refer to it, or only once.
- *
- * @author Ulrik Guenther <hello@ulrik.is>
- */
-open class DelegatesRendering(val delegationType: DelegationType = DelegationType.OncePerDelegate, var delegate: Node? = null): Node("DelegatesRendering")

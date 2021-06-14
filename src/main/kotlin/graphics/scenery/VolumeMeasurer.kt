@@ -46,10 +46,10 @@ class VolumeMeasurer {
             //the clockwise ordering in triangle strips makes it necessary.
             val volume = ((-i1 + i2 + i3 - i4 - i5 + i6)/6f).absoluteValue
             subVolumes.add(volume)
-            if(arraySize%9 == 0 && mesh.geometryType == GeometryType.TRIANGLES) {
+            if(arraySize%9 == 0 && mesh.geometry().geometryType == GeometryType.TRIANGLES) {
                 i += 9
             }
-            else if (arraySize%3 == 0 && mesh.geometryType == GeometryType.TRIANGLE_STRIP) {
+            else if (arraySize%3 == 0 && mesh.geometry().geometryType == GeometryType.TRIANGLE_STRIP) {
                 if(i < arraySize-9) {
                     i += 3
                 }

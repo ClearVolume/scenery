@@ -3,6 +3,8 @@ package graphics.scenery.tests.examples.basic
 import org.joml.Vector3f
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
+import graphics.scenery.attribute.material.DefaultMaterial
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.Image
 import graphics.scenery.utils.SceneryJPanel
@@ -30,7 +32,7 @@ class SwingTexturedCubeExample : SceneryBase("SwingTexturedCubeExample", windowW
         renderer = hub.add(Renderer.createRenderer(hub, applicationName, scene, windowWidth, windowHeight, embedIn = sceneryPanel))
         renderer?.pushMode = true
 
-        val boxmaterial = Material()
+        val boxmaterial = DefaultMaterial()
         with(boxmaterial) {
             ambient = Vector3f(1.0f, 0.0f, 0.0f)
             diffuse = Vector3f(0.0f, 1.0f, 0.0f)
@@ -42,19 +44,23 @@ class SwingTexturedCubeExample : SceneryBase("SwingTexturedCubeExample", windowW
         box.name = "le box du win"
 
         with(box) {
-            box.material = boxmaterial
+            box.addAttribute(Material::class.java, boxmaterial)
             scene.addChild(this)
         }
 
         val light = PointLight(radius = 15.0f)
-        light.position = Vector3f(0.0f, 0.0f, 2.0f)
+        light.spatial {
+            position = Vector3f(0.0f, 0.0f, 2.0f)
+        }
         light.intensity = 5.0f
         light.emissionColor = Vector3f(1.0f, 1.0f, 1.0f)
         scene.addChild(light)
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 0.0f, 5.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 5.0f)
+            }
             perspectiveCamera(50.0f, 512, 512)
 
             scene.addChild(this)
@@ -62,8 +68,10 @@ class SwingTexturedCubeExample : SceneryBase("SwingTexturedCubeExample", windowW
 
         thread {
             while (true) {
-                box.rotation.rotateY(0.01f)
-                box.needsUpdate = true
+                box.spatial {
+                    rotation.rotateY(0.01f)
+                    needsUpdate = true
+                }
 
                 Thread.sleep(20)
             }

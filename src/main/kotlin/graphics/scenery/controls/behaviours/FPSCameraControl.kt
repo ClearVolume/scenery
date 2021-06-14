@@ -82,18 +82,22 @@ open class FPSCameraControl(private val name: String, private val n: () -> Camer
             return
         }
 
-        var xoffset: Float = (x - lastX).toFloat() * mouseSpeedMultiplier
-        var yoffset: Float = (y - lastY).toFloat() * mouseSpeedMultiplier
+        node?.ifSpatial {
 
-        lastX = x
-        lastY = y
+            var xoffset: Float = (x - lastX).toFloat() * mouseSpeedMultiplier
+            var yoffset: Float = (y - lastY).toFloat() * mouseSpeedMultiplier
 
-        val frameYaw = xoffset
-        val framePitch = yoffset
+            lastX = x
+            lastY = y
 
-        val yawQ = Quaternionf().rotateXYZ(0.0f, frameYaw/180.0f*Math.PI.toFloat(), 0.0f)
-        val pitchQ = Quaternionf().rotateXYZ(framePitch/180.0f*Math.PI.toFloat(), 0.0f, 0.0f)
-        node?.rotation = pitchQ.mul(node?.rotation).mul(yawQ).normalize()
+            val frameYaw = xoffset
+            val framePitch = yoffset
+
+            val yawQ = Quaternionf().rotateXYZ(0.0f, frameYaw/180.0f*Math.PI.toFloat(), 0.0f)
+            val pitchQ = Quaternionf().rotateXYZ(framePitch/180.0f*Math.PI.toFloat(), 0.0f, 0.0f)
+            rotation = pitchQ.mul(rotation).mul(yawQ).normalize()
+        }
+
 
         node?.lock?.unlock()
     }

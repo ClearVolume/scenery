@@ -35,7 +35,7 @@ class ConeTests {
 
         val c = Cone(radius, height, 4 * segments, axisN)
         s.addChild(c)
-        c.updateWorld(true)
+        c.spatial().updateWorld(true)
 
         val bb = c.boundingBox
 

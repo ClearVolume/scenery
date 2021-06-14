@@ -366,56 +366,58 @@ open class SDFFontAtlas(var hub: Hub, val fontName: String, val distanceFieldSiz
     @Suppress("UNCHECKED_CAST")
     fun createMeshForString(text: String): Mesh {
         val m = Mesh()
-        m.geometryType = GeometryType.TRIANGLES
+        m.geometry {
+            geometryType = GeometryType.TRIANGLES
 
-        val vertices = ArrayList<Float>()
-        val normals = ArrayList<Float>()
-        val texcoords = ArrayList<Float>()
-        val indices = ArrayList<Int>()
+            val vertices = ArrayList<Float>()
+            val normals = ArrayList<Float>()
+            val texcoords = ArrayList<Float>()
+            val indices = ArrayList<Int>()
 
-        var basex = 0.0f
-        var basei = 0
+            var basex = 0.0f
+            var basei = 0
 
-        text.toCharArray().forEachIndexed { _, char ->
-            val glyphWidth = fontMap[char]!!.first
+            text.toCharArray().forEachIndexed { _, char ->
+                val glyphWidth = fontMap[char]!!.first
 
-            vertices.addAll(listOf(
+                vertices.addAll(listOf(
                     basex + 0.0f, 0.0f, 0.0f,
                     basex + glyphWidth, 0.0f, 0.0f,
                     basex + glyphWidth, 1.0f, 0.0f,
                     basex + 0.0f, 1.0f, 0.0f
-            ))
+                ))
 
-            normals.addAll(listOf(
+                normals.addAll(listOf(
                     0.0f, 0.0f, 1.0f,
                     0.0f, 0.0f, 1.0f,
                     0.0f, 0.0f, 1.0f,
                     0.0f, 0.0f, 1.0f
-            ))
+                ))
 
-            indices.addAll(listOf(
+                indices.addAll(listOf(
                     basei + 0, basei + 1, basei + 2,
                     basei + 0, basei + 2, basei + 3
-            ))
+                ))
 
-            val glyphTexCoords = getTexcoordsForGlyph(char)
+                val glyphTexCoords = getTexcoordsForGlyph(char)
 
-            texcoords.addAll(listOf(
+                texcoords.addAll(listOf(
                     glyphTexCoords.x(), glyphTexCoords.w(),
                     glyphTexCoords.z(), glyphTexCoords.w(),
                     glyphTexCoords.z(), glyphTexCoords.y(),
                     glyphTexCoords.x(), glyphTexCoords.y()
-            ))
+                ))
 
-            // add font width as new base size
-            basex += glyphWidth
-            basei += 4
+                // add font width as new base size
+                basex += glyphWidth
+                basei += 4
+            }
+
+            this.vertices = BufferUtils.allocateFloatAndPut(vertices.toFloatArray())
+            this.normals = BufferUtils.allocateFloatAndPut(normals.toFloatArray())
+            this.texcoords = BufferUtils.allocateFloatAndPut(texcoords.toFloatArray())
+            this.indices = BufferUtils.allocateIntAndPut(indices.toIntArray())
         }
-
-        m.vertices = BufferUtils.allocateFloatAndPut(vertices.toFloatArray())
-        m.normals = BufferUtils.allocateFloatAndPut(normals.toFloatArray())
-        m.texcoords = BufferUtils.allocateFloatAndPut(texcoords.toFloatArray())
-        m.indices = BufferUtils.allocateIntAndPut(indices.toIntArray())
 
         return m
     }

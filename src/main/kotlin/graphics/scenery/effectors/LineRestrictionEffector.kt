@@ -21,28 +21,29 @@ open class LineRestrictionEffector(val target: Node, var from: () -> Vector3f, v
             if (!active){
                 return@add
             }
-            val it = target
-            val a = from()
-            val b = to()
+            target.ifSpatial {
+                val a = from()
+                val b = to()
 
-            val p = it.position
+                val p = position
 
-            val ab = b - a
-            val ap = p - a
+                val ab = b - a
+                val ap = p - a
 
-            val dot = ap.dot(ab)
+                val dot = ap.dot(ab)
 
-            if (dot <= 0) {
-                it.position = a
-                return@add
-            }
+                if (dot <= 0) {
+                    position = a
+                    return@ifSpatial
+                }
 
-            val pDotDir = ab * (dot / ab.lengthSquared())
+                val pDotDir = ab * (dot / ab.lengthSquared())
 
-            if (pDotDir.lengthSquared() > ab.lengthSquared()) {
-                it.position = b
-            } else {
-                it.position = a + pDotDir
+                if (pDotDir.lengthSquared() > ab.lengthSquared()) {
+                    position = b
+                } else {
+                    position = a + pDotDir
+                }
             }
         }
     }

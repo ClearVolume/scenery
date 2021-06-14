@@ -20,7 +20,7 @@ class TransformedMultiResolutionStack3D<T>(val stack: MultiResolutionStack3D<T>,
     override fun getSourceTransform(): AffineTransform3D {
         val w = AffineTransform3D()
         val arr = FloatArray(16)
-        Matrix4f(node.world).transpose().get(arr)
+        Matrix4f(node.spatialOrNull()?.world).transpose().get(arr)
 
         w.set(*arr.map { it.toDouble() }.toDoubleArray())
         return w.concatenate(actualSourceTransform)

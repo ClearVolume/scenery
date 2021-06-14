@@ -110,9 +110,10 @@ open class GamepadCameraControl(private val name: String,
 //        node?.forward = forward.normalized
         logger.trace("Pitch={} Yaw={}", pitch, yaw)
 
-        val yawQ = Quaternionf().rotateXYZ(0.0f, yaw, 0.0f)
-        val pitchQ = Quaternionf().rotateXYZ(pitch, 0.0f, 0.0f)
-
-        n.rotation = pitchQ.mul(n.rotation).mul(yawQ).normalize()
+        n.ifSpatial {
+            val yawQ = Quaternionf().rotateXYZ(0.0f, yaw, 0.0f)
+            val pitchQ = Quaternionf().rotateXYZ(pitch, 0.0f, 0.0f)
+            rotation = pitchQ.mul(rotation).mul(yawQ).normalize()
+        }
     }
 }

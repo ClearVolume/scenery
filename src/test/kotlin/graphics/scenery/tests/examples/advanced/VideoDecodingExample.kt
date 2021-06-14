@@ -31,14 +31,14 @@ class VideoDecodingExample : SceneryBase("VideoDecodingExample", 600, 600, wantR
         val cam = DetachedHeadCamera()
 
         with(cam) {
-            position = Vector3f(-4.365f, 0.38f, 0.62f)
             perspectiveCamera(50.0f, windowWidth, windowHeight)
-
+            spatial {
+                position = Vector3f(3.213f, 8.264E-1f, -9.844E-1f)
+                rotation = Quaternionf(3.049E-2, 9.596E-1, -1.144E-1, -2.553E-1)
+            }
             scene.addChild(this)
         }
 
-        cam.position = Vector3f(3.213f, 8.264E-1f, -9.844E-1f)
-        cam.rotation = Quaternionf(3.049E-2, 9.596E-1, -1.144E-1, -2.553E-1)
 
         val plane = FullscreenObject()
         scene.addChild(plane)
@@ -80,7 +80,9 @@ class VideoDecodingExample : SceneryBase("VideoDecodingExample", 600, 600, wantR
             buffer.put(tex).flip()
         }
 
-        plane.material.textures["diffuse"] = Texture(Vector3i(width, height, 1), 4, contents = buffer, mipmap = true)
+        plane.material {
+            textures["diffuse"] = Texture(Vector3i(width, height, 1), 4, contents = buffer, mipmap = true)
+        }
     }
 
     override fun main() {

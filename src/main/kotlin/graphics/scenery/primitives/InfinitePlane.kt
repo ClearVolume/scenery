@@ -2,6 +2,7 @@ package graphics.scenery.primitives
 
 import graphics.scenery.*
 import graphics.scenery.backends.Shaders
+import graphics.scenery.attribute.material.Material
 
 /**
  * Class for rendering infinite planes.
@@ -26,13 +27,16 @@ class InfinitePlane : Mesh("InfinitePlane"), DisableFrustumCulling, RenderingOrd
     override var renderingOrder = Int.MAX_VALUE
 
     init {
-        vertices = BufferUtils.allocateFloatAndPut(FloatArray(6 * 3))
-        normals = BufferUtils.allocateFloatAndPut(FloatArray(6 * 3))
-        texcoords = BufferUtils.allocateFloatAndPut(FloatArray(6 * 2))
+        geometry {
+            vertices = BufferUtils.allocateFloatAndPut(FloatArray(6 * 3))
+            normals = BufferUtils.allocateFloatAndPut(FloatArray(6 * 3))
+            texcoords = BufferUtils.allocateFloatAndPut(FloatArray(6 * 2))
+        }
 
-        material = ShaderMaterial(Shaders.ShadersFromFiles(arrayOf("InfiniteGrid.vert", "InfiniteGrid.frag")))
-        material.blending.transparent = true
-        material.blending.setOverlayBlending()
-        material.cullingMode = Material.CullingMode.None
+        setMaterial(ShaderMaterial(Shaders.ShadersFromFiles(arrayOf("InfiniteGrid.vert", "InfiniteGrid.frag")))) {
+            blending.transparent = true
+            blending.setOverlayBlending()
+            cullingMode = Material.CullingMode.None
+        }
     }
 }

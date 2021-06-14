@@ -5,6 +5,7 @@ import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
 import graphics.scenery.Mesh
+import graphics.scenery.attribute.material.Material
 import kotlin.concurrent.thread
 
 /**
@@ -18,7 +19,9 @@ class MultiBoxExample : SceneryBase("MultiBoxExample") {
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(10.0f, 10.0f, 10.0f)
+            spatial {
+                position = Vector3f(10.0f, 10.0f, 10.0f)
+            }
             perspectiveCamera(60.0f, windowWidth, windowHeight, 1.0f, 1000.0f)
             scene.addChild(this)
         }
@@ -38,8 +41,12 @@ class MultiBoxExample : SceneryBase("MultiBoxExample") {
             val j: Double = (s / boundaryWidth) % boundaryHeight
             val i: Double = s / (boundaryWidth * boundaryHeight)
 
-            box.position = Vector3f(Math.floor(i).toFloat() * 3.0f, Math.floor(j).toFloat() * 3.0f, Math.floor(k).toFloat() * 3.0f)
-            box.material.diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+            box.spatial {
+                position = Vector3f(Math.floor(i).toFloat() * 3.0f, Math.floor(j).toFloat() * 3.0f, Math.floor(k).toFloat() * 3.0f)
+            }
+            box.material {
+                diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+            }
 
             m.addChild(box)
         }
@@ -49,7 +56,9 @@ class MultiBoxExample : SceneryBase("MultiBoxExample") {
         val lights = (0..20).map {
             PointLight(radius = 250.0f)
         }.map {
-            it.position = Random.random3DVectorFromRange(-100.0f, 100.0f)
+            it.spatial {
+                position = Random.random3DVectorFromRange(-100.0f, 100.0f)
+            }
             it.emissionColor = Vector3f(1.0f, 1.0f, 1.0f)
             it.intensity = Random.randomFromRange(0.1f, 0.5f)
             it
@@ -59,20 +68,26 @@ class MultiBoxExample : SceneryBase("MultiBoxExample") {
 
         val hullbox = Box(Vector3f(100.0f, 100.0f, 100.0f), insideNormals = true)
         with(hullbox) {
-            position = Vector3f(0.0f, 0.0f, 0.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 0.0f)
+            }
 
-            material.ambient = Vector3f(0.6f, 0.6f, 0.6f)
-            material.diffuse = Vector3f(0.4f, 0.4f, 0.4f)
-            material.specular = Vector3f(0.0f, 0.0f, 0.0f)
-            material.cullingMode = Material.CullingMode.Front
+            material {
+                ambient = Vector3f(0.6f, 0.6f, 0.6f)
+                diffuse = Vector3f(0.4f, 0.4f, 0.4f)
+                specular = Vector3f(0.0f, 0.0f, 0.0f)
+                cullingMode = Material.CullingMode.Front
+            }
 
             scene.addChild(this)
         }
 
         thread {
             while (true) {
-                m.rotation.rotateXYZ(0.001f, 0.001f, 0.0f)
-                m.needsUpdate = true
+                m.spatial {
+                    rotation.rotateXYZ(0.001f, 0.001f, 0.0f)
+                    needsUpdate = true
+                }
 
                 Thread.sleep(10)
             }

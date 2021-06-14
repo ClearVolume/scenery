@@ -1,6 +1,10 @@
 package graphics.scenery
 
 import graphics.scenery.primitives.TextBoard
+import graphics.scenery.attribute.material.HasMaterial
+import graphics.scenery.attribute.renderable.HasRenderable
+import graphics.scenery.attribute.spatial.DefaultSpatial
+import graphics.scenery.attribute.spatial.HasCustomSpatial
 import graphics.scenery.utils.extensions.minus
 import graphics.scenery.utils.extensions.plus
 import graphics.scenery.utils.extensions.times
@@ -21,7 +25,7 @@ import kotlin.math.tan
  * @constructor Creates a new camera with default position and right-handed
  *  coordinate system.
  */
-open class Camera : Node("Camera") {
+open class Camera : DefaultNode("Camera"), HasRenderable, HasMaterial, HasCustomSpatial<Camera.CameraSpatial> {
 
     /** Enum class for camera projection types */
     enum class ProjectionType {
@@ -59,46 +63,17 @@ open class Camera : Node("Camera") {
     /** Disables culling for this camera. */
     var disableCulling: Boolean = false
 
-    /** View matrix of the camera. Setting the view matrix will re-set the forward
-     *  vector of the camera according to the given matrix.
-     */
-    override var view: Matrix4f = Matrix4f().identity()
-        set(m) {
-            m.let {
-                this.right = Vector3f(m.get(0, 0), m.get(1, 0), m.get(2, 0)).normalize()
-                this.up = Vector3f(m.get(0, 1), m.get(1, 1), m.get(2, 1)).normalize()
-                this.forward = Vector3f(m.get(0, 2), m.get(1, 2), m.get(2, 2)).normalize() * -1.0f
-
-                this.viewSpaceTripod = cameraTripod()
-
-                this.needsUpdate = true
-                this.needsUpdateWorld = true
-
-                if(!targeted) {
-                    this.target = this.position + this.forward
-                }
-            }
-            field = m
-        }
-
-    /** Rotation of the camera. The rotation is applied after the view matrix */
-    override var rotation: Quaternionf = Quaternionf(0.0f, 0.0f, 0.0f, 1.0f)
-        set(q) {
-            q.let {
-                field = q
-                val m = Matrix4f().set(q)
-                this.forward = Vector3f(m.get(0, 2), m.get(1, 2), m.get(2, 2)).normalize() * -1.0f
-                this.viewSpaceTripod = cameraTripod()
-
-                this.needsUpdate = true
-                this.needsUpdateWorld = true
-            }
-        }
-
     init {
         this.nodeType = "Camera"
         this.viewSpaceTripod = cameraTripod()
         this.name = "Camera-${counter.incrementAndGet()}"
+        addSpatial()
+        addRenderable()
+        addMaterial()
+    }
+
+    override fun createSpatial(): CameraSpatial {
+        return CameraSpatial(this)
     }
 
     /**
@@ -139,12 +114,14 @@ open class Camera : Node("Camera") {
         this.width = width
         this.height = height
 
-        this.projection = Matrix4f().perspective(
-            this.fov / 180.0f * Math.PI.toFloat(),
-            width.toFloat() / height.toFloat(),
-            this.nearPlaneDistance,
-            this.farPlaneDistance
-        )
+        spatial {
+            this.projection = Matrix4f().perspective(
+                this@Camera.fov / 180.0f * Math.PI.toFloat(),
+                width.toFloat() / height.toFloat(),
+                this@Camera.nearPlaneDistance,
+                this@Camera.farPlaneDistance
+            )
+        }
 
         this.projectionType = ProjectionType.Perspective
     }
@@ -160,81 +137,10 @@ open class Camera : Node("Camera") {
         this.width = width
         this.height = height
 
-        this.projection = Matrix4f().orthoSymmetric(width.toFloat(), height.toFloat(), nearPlaneLocation, farPlaneLocation)
+        spatial {
+            this.projection = Matrix4f().orthoSymmetric(width.toFloat(), height.toFloat(), nearPlaneLocation, farPlaneLocation)
+        }
         this.projectionType = ProjectionType.Orthographic
-    }
-
-    /**
-     * Returns this camera's transformation matrix.
-     */
-    open fun getTransformation(): Matrix4f {
-        val tr = Matrix4f().translate(this.position * (-1.0f))
-        val r = Matrix4f().set(this.rotation)
-
-        return r * tr
-    }
-
-    /**
-     * Returns this camera's transformation matrix, including a
-     * [preRotation] that is applied before the camera's transformation.
-     */
-    open fun getTransformation(preRotation: Quaternionf): Matrix4f {
-        val tr = Matrix4f().translate(this.position * (-1.0f))
-        val r = Matrix4f().set(preRotation * this.rotation)
-
-        return r * tr
-    }
-
-    /**
-     * Returns this camera's transformation for eye with index [eye].
-     */
-    open fun getTransformationForEye(eye: Int): Matrix4f {
-        val tr = Matrix4f().translate(this.position * (-1.0f))
-        val r = Matrix4f().set(this.rotation)
-
-        return r * tr
-    }
-
-    /**
-     * Transforms a 3D vector from view space to world coordinates.
-     *
-     * @param v - The vector to be transformed into world space.
-     * @return Vector3f - [v] transformed into world space.
-     */
-    fun viewToWorld(v: Vector3f): Vector4f =
-        Matrix4f(this.view).invert().transform(Vector4f(v.x(), v.y(), v.z(), 1.0f))
-
-    /**
-     * Transforms a 4D vector from view space to world coordinates.
-     *
-     * @param v - The vector to be transformed into world space.
-     * @return Vector3f - [v] transformed into world space.
-     */
-    fun viewToWorld(v: Vector4f): Vector4f =
-        Matrix4f(this.view).invert().transform(v)
-
-    /**
-     * Transforms a 2D [vector] in screen space to view space and returns this 3D vector.
-     */
-    fun viewportToView(vector: Vector2f): Vector3f {
-        return Matrix4f(projection).invert().transform(Vector4f(vector.x, vector.y, 0.0f, 1.0f)).xyz()
-    }
-
-    /**
-     * Transforms a 2D/3D [vector] from NDC coordinates to world coordinates.
-     * If the vector is 2D, [nearPlaneDistance] is assumed for the Z value, otherwise
-     * the Z value from the vector is taken.
-     */
-    fun viewportToWorld(vector: Vector2f): Vector3f {
-        val pv = Matrix4f(projection)
-        pv.mul(getTransformation())
-        val ipv = Matrix4f(pv).invert()
-
-        var worldSpace = ipv.transform(Vector4f(vector.x(), vector.y(), 0.0f, 1.0f))
-
-        worldSpace = worldSpace.times(1.0f/worldSpace.w())
-//        worldSpace.set(2, offset)
-        return worldSpace.xyz()
     }
 
     /**
@@ -262,7 +168,7 @@ open class Camera : Node("Camera") {
      * Returns (worldPos, worldDir)
      */
     fun screenPointToRay(x: Int, y: Int): Pair<Vector3f, Vector3f> {
-        val view = (if (targeted) target - position else  forward).normalize()
+        val view = (if (targeted) target - spatial().position else  forward).normalize()
         var h = Vector3f(view).cross(up).normalize()
         var v = Vector3f(h).cross(view)
 
@@ -276,8 +182,8 @@ open class Camera : Node("Camera") {
         val posX = (x - width / 2.0f) / (width / 2.0f)
         val posY = -1.0f * (y - height / 2.0f) / (height / 2.0f)
 
-        val worldPos = position + view * nearPlaneDistance + h * posX + v * posY
-        val worldDir = (worldPos - position).normalize()
+        val worldPos = spatial().position + view * nearPlaneDistance + h * posX + v * posY
+        val worldDir = (worldPos - spatial().position).normalize()
         return Pair(worldPos, worldDir)
     }
 
@@ -299,7 +205,7 @@ open class Camera : Node("Camera") {
      */
     fun canSee(node: Node): Boolean {
         // TODO: Figure out how to efficiently cull instances
-        if(disableCulling || node.instances.size > 0 || node is DisableFrustumCulling) {
+        if(disableCulling || node is InstancedNode || node is DisableFrustumCulling) {
             return true
         }
 
@@ -310,7 +216,7 @@ open class Camera : Node("Camera") {
         val sphereX = 1.0f/cos(angleX)
         val (x, y, z) = viewSpaceTripod
 
-        val v = bs.origin - position
+        val v = bs.origin - spatial().position
         var result = true
 
         // check whether the sphere is within the Z bounds
@@ -373,8 +279,10 @@ open class Camera : Node("Camera") {
         tb.fontColor = messageColor
         tb.backgroundColor = backgroundColor
         tb.text = message
-        tb.scale = Vector3f(size, size, size)
-        tb.position = Vector3f(0.0f, 0.0f, -1.0f * distance)
+        tb.spatial {
+            scale = Vector3f(size, size, size)
+            position = Vector3f(0.0f, 0.0f, -1.0f * distance)
+        }
 
         @Suppress("UNCHECKED_CAST")
         val messages = metadata.getOrPut("messages", { mutableListOf<Node>() }) as? MutableList<Node>?
@@ -392,12 +300,155 @@ open class Camera : Node("Camera") {
         }
     }
 
-    override fun composeModel() {
-        model = getTransformation().invert()
-    }
-
     companion object {
         protected val counter = AtomicInteger(0)
+    }
+
+
+    open class CameraSpatial(val camera: Camera): DefaultSpatial(camera) {
+        /** View matrix of the camera. Setting the view matrix will re-set the forward
+         *  vector of the camera according to the given matrix.
+         */
+        override var view: Matrix4f = Matrix4f().identity()
+            set(m) {
+                m.let {
+                    camera.right = Vector3f(m.get(0, 0), m.get(1, 0), m.get(2, 0)).normalize()
+                    camera.up = Vector3f(m.get(0, 1), m.get(1, 1), m.get(2, 1)).normalize()
+                    camera.forward = Vector3f(m.get(0, 2), m.get(1, 2), m.get(2, 2)).normalize() * -1.0f
+
+                    camera.viewSpaceTripod = camera.cameraTripod()
+
+                    this.needsUpdate = true
+                    this.needsUpdateWorld = true
+
+                    if(!camera.targeted) {
+                        camera.target = this.position + camera.forward
+                    }
+                }
+                field = m
+            }
+
+        /** Rotation of the camera. The rotation is applied after the view matrix */
+        override var rotation: Quaternionf = Quaternionf(0.0f, 0.0f, 0.0f, 1.0f)
+            set(q) {
+                q.let {
+                    field = q
+                    val m = Matrix4f().set(q)
+                    camera.forward = Vector3f(m.get(0, 2), m.get(1, 2), m.get(2, 2)).normalize() * -1.0f
+                    camera.viewSpaceTripod = camera.cameraTripod()
+
+                    this.needsUpdate = true
+                    this.needsUpdateWorld = true
+                }
+            }
+
+        override fun composeModel() {
+            model = getTransformation().invert()
+        }
+
+        /**
+         * Returns this camera's transformation matrix.
+         */
+        open fun getTransformation(): Matrix4f {
+            val tr = Matrix4f().translate(this.position * (-1.0f))
+            val r = Matrix4f().set(this.rotation)
+
+            return r * tr
+        }
+
+        /**
+         * Returns this camera's transformation matrix, including a
+         * [preRotation] that is applied before the camera's transformation.
+         */
+        open fun getTransformation(preRotation: Quaternionf): Matrix4f {
+            val tr = Matrix4f().translate(this.position * (-1.0f))
+            val r = Matrix4f().set(preRotation * this.rotation)
+
+            return r * tr
+        }
+
+        /**
+         * Returns this camera's transformation for eye with index [eye].
+         */
+        open fun getTransformationForEye(eye: Int): Matrix4f {
+            val tr = Matrix4f().translate(this.position * (-1.0f))
+            val r = Matrix4f().set(this.rotation)
+
+            return r * tr
+        }
+
+        /**
+         * Transforms a 3D vector from view space to world coordinates.
+         *
+         * @param v - The vector to be transformed into world space.
+         * @return Vector3f - [v] transformed into world space.
+         */
+        fun viewToWorld(v: Vector3f): Vector4f =
+            Matrix4f(this.view).invert().transform(Vector4f(v.x(), v.y(), v.z(), 1.0f))
+
+        /**
+         * Transforms a 4D vector from view space to world coordinates.
+         *
+         * @param v - The vector to be transformed into world space.
+         * @return Vector3f - [v] transformed into world space.
+         */
+        fun viewToWorld(v: Vector4f): Vector4f =
+            Matrix4f(view).invert().transform(v)
+
+        /**
+         * Transforms a 2D [vector] in screen space to view space and returns this 3D vector.
+         */
+        fun viewportToView(vector: Vector2f): Vector3f {
+            return Matrix4f(projection).invert().transform(Vector4f(vector.x, vector.y, 0.0f, 1.0f)).xyz()
+        }
+
+        /**
+         * Transforms a 2D/3D [vector] from NDC coordinates to world coordinates.
+         * If the vector is 2D, [nearPlaneDistance] is assumed for the Z value, otherwise
+         * the Z value from the vector is taken.
+         */
+        fun viewportToWorld(vector: Vector2f): Vector3f {
+            val pv = Matrix4f(projection)
+            pv.mul(getTransformation())
+            val ipv = Matrix4f(pv).invert()
+
+            var worldSpace = ipv.transform(Vector4f(vector.x(), vector.y(), 0.0f, 1.0f))
+
+            worldSpace = worldSpace.times(1.0f/worldSpace.w())
+//        worldSpace.set(2, offset)
+            return worldSpace.xyz()
+        }
+
+    }
+
+    @Deprecated(message = "", replaceWith = ReplaceWith("spatial().viewportToWorld(vector)"))
+    fun viewportToWorld(vector: Vector2f): Vector3f {
+        return spatial().viewportToWorld(vector)
+    }
+
+    @Deprecated(message = "", replaceWith = ReplaceWith("spatial().viewportToView(vector)"))
+    fun viewportToView(vector: Vector2f): Vector3f {
+        return spatial().viewportToView(vector)
+    }
+
+    @Deprecated(message = "", replaceWith = ReplaceWith("spatial().viewToWorld(vector)"))
+    fun viewToWorld(vector: Vector4f): Vector4f {
+        return spatial().viewToWorld(vector)
+    }
+
+    @Deprecated(message = "", replaceWith = ReplaceWith("spatial().viewToWorld(vector)"))
+    fun viewToWorld(vector: Vector3f): Vector4f {
+        return spatial().viewToWorld(vector)
+    }
+
+    @Deprecated(message = "", replaceWith = ReplaceWith("spatial().getTransformationForEye(eye)"))
+    fun getTransformationForEye(eye: Int): Matrix4f {
+        return spatial().getTransformationForEye(eye)
+    }
+
+    @Deprecated(message = "", replaceWith = ReplaceWith("spatial().getTransformation(preRotation)"))
+    open fun getTransformation(preRotation: Quaternionf): Matrix4f {
+        return spatial().getTransformation(preRotation)
     }
 }
 

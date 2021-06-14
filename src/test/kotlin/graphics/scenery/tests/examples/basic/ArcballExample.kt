@@ -21,7 +21,9 @@ class ArcballExample : SceneryBase("ArcballExample") {
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 0.0f, 2.5f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 2.5f)
+            }
             perspectiveCamera(70.0f, windowWidth, windowHeight)
 
             targeted = true
@@ -37,12 +39,15 @@ class ArcballExample : SceneryBase("ArcballExample") {
         val box = Box(Vector3f(1.0f, 1.0f, 1.0f))
 
         with(box) {
-            box.position = Vector3f(0.0f, 0.0f, 0.0f)
-
-            material.ambient = Vector3f(1.0f, 0.0f, 0.0f)
-            material.diffuse = Vector3f(0.0f, 1.0f, 0.0f)
-            material.specular = Vector3f(1.0f, 1.0f, 1.0f)
-            material.textures["diffuse"] = Texture.fromImage(Image.fromResource("textures/helix.png", TexturedCubeExample::class.java))
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 0.0f)
+            }
+            material {
+                ambient = Vector3f(1.0f, 0.0f, 0.0f)
+                diffuse = Vector3f(0.0f, 1.0f, 0.0f)
+                textures["diffuse"] = Texture.fromImage(Image.fromResource("textures/helix.png", TexturedCubeExample::class.java))
+                specular = Vector3f(1.0f, 1.0f, 1.0f)
+            }
 
             scene.addChild(this)
         }
@@ -50,15 +55,21 @@ class ArcballExample : SceneryBase("ArcballExample") {
         val lights = (0..2).map {
             PointLight(radius = 15.0f)
         }.map { light ->
-            light.position = Random.random3DVectorFromRange(-3.0f, 3.0f)
+            light.spatial {
+                position = Random.random3DVectorFromRange(-3.0f, 3.0f)
+            }
             light.emissionColor = Random.random3DVectorFromRange(0.2f, 0.8f)
             light.intensity = Random.randomFromRange(0.1f, 0.8f)
             light
         }
 
         val floor = Box(Vector3f(500.0f, 0.05f, 500.0f))
-        floor.position = Vector3f(0.0f, -1.0f, 0.0f)
-        floor.material.diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+        floor.spatial {
+            position = Vector3f(0.0f, -1.0f, 0.0f)
+        }
+        floor.material {
+            diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+        }
         scene.addChild(floor)
 
         lights.forEach(scene::addChild)

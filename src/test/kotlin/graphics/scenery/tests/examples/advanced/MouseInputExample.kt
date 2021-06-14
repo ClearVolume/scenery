@@ -8,12 +8,9 @@ import graphics.scenery.controls.behaviours.MouseRotate
 import graphics.scenery.controls.behaviours.SelectCommand
 import graphics.scenery.effectors.LineRestrictionEffector
 import graphics.scenery.numerics.Random
-import graphics.scenery.utils.extensions.minus
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.utils.extensions.plus
-import graphics.scenery.utils.extensions.times
-import graphics.scenery.utils.extensions.xyz
 import org.joml.Vector3f
-import org.joml.Vector4f
 import kotlin.concurrent.thread
 
 /**
@@ -36,41 +33,43 @@ class MouseInputExample : SceneryBase("MouseInputExample", wantREPL = true) {
         for (i in 0 until 200) {
             if (i % 2 == 0) {
                 val s = Icosphere(Random.randomFromRange(0.04f, 0.2f), 2)
-                s.position = Random.random3DVectorFromRange(-5.0f, 5.0f)
+                s.spatial().position = Random.random3DVectorFromRange(-5.0f, 5.0f)
                 scene.addChild(s)
             } else {
                 val box = Box(Random.random3DVectorFromRange(0.04f, 0.2f), insideNormals = true)
-                box.material.diffuse = Vector3f(0f, 1.0f, 1.0f)
-                box.position = Random.random3DVectorFromRange(-5.0f, 5.0f)
+                box.material().diffuse = Vector3f(0f, 1.0f, 1.0f)
+                box.spatial().position = Random.random3DVectorFromRange(-5.0f, 5.0f)
                 scene.addChild(box)
             }
         }
 
         val box = Box(Vector3f(10.0f, 10.0f, 10.0f), insideNormals = true)
-        box.material.diffuse = Vector3f(1.0f, 1.0f, 1.0f)
-        box.material.cullingMode = Material.CullingMode.Front
+        box.material {
+            diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+            cullingMode = Material.CullingMode.Front
+        }
         scene.addChild(box)
 
         val largePlate = Box(Vector3f(7.0f, 1.0f, 8.0f))
-        largePlate.material.diffuse = Vector3f(0.0f, 1.0f, 0.5f)
-        largePlate.position = Vector3f(0f,-4.0f,0f)
+        largePlate.material().diffuse = Vector3f(0.0f, 1.0f, 0.5f)
+        largePlate.spatial().position = Vector3f(0f,-4.0f,0f)
         scene.addChild(largePlate)
 
         val restrictedDragSphere = Icosphere(Random.randomFromRange(0.04f, 0.2f), 2)
-        restrictedDragSphere.material.diffuse = Vector3f(0f, 1.0f, 0f)
+        restrictedDragSphere.material().diffuse = Vector3f(0f, 1.0f, 0f)
         scene.addChild(restrictedDragSphere)
 
         LineRestrictionEffector(restrictedDragSphere,{Vector3f(-1f,0f,0f)},{Vector3f(1f,0f,0f)})
 
         val light = PointLight(radius = 15.0f)
-        light.position = Vector3f(0.0f, 0.0f, 2.0f)
+        light.spatial().position = Vector3f(0.0f, 0.0f, 2.0f)
         light.intensity = 1.0f
         light.emissionColor = Vector3f(1.0f, 1.0f, 1.0f)
         scene.addChild(light)
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 0.0f, 5.0f)
+            spatial().position = Vector3f(0.0f, 0.0f, 5.0f)
             perspectiveCamera(50.0f, 512, 512)
 
             scene.addChild(this)
@@ -82,10 +81,10 @@ class MouseInputExample : SceneryBase("MouseInputExample", wantREPL = true) {
 
         val wiggle: (Scene.RaycastResult, Int, Int) -> Unit = { result, _, _ ->
             result.matches.firstOrNull()?.let { nearest ->
-                val originalPosition = Vector3f(nearest.node.position)
+                val originalPosition = Vector3f(nearest.node.spatialOrNull()?.position)
                 thread {
                     for (i in 0 until 200) {
-                        nearest.node.position = originalPosition + Random.random3DVectorFromRange(-0.05f, 0.05f)
+                        nearest.node.spatialOrNull()?.position = originalPosition + Random.random3DVectorFromRange(-0.05f, 0.05f)
                         Thread.sleep(2)
                     }
                 }

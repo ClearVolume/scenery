@@ -10,8 +10,12 @@ import com.jogamp.opengl.util.awt.AWTGLReadBufferUtil
 import graphics.scenery.*
 import graphics.scenery.backends.*
 import graphics.scenery.geometry.GeometryType
-import graphics.scenery.geometry.HasGeometry
 import graphics.scenery.primitives.Plane
+import graphics.scenery.attribute.DelegatesProperties
+import graphics.scenery.attribute.DelegationType
+import graphics.scenery.attribute.geometry.Geometry
+import graphics.scenery.attribute.material.Material
+import graphics.scenery.attribute.renderable.Renderable
 import graphics.scenery.spirvcrossj.Loader
 import graphics.scenery.spirvcrossj.libspirvcrossj
 import graphics.scenery.textures.Texture
@@ -587,7 +591,7 @@ open class OpenGLRenderer(hub: Hub,
         initialized = true
     }
 
-    private fun Node.rendererMetadata(): OpenGLObjectState? {
+    private fun Renderable.rendererMetadata(): OpenGLObjectState? {
         return this.metadata["OpenGLRenderer"] as? OpenGLObjectState
     }
 
@@ -1053,11 +1057,11 @@ open class OpenGLRenderer(hub: Hub,
      * Convenience function that extracts the [OpenGLObjectState] from a [Node]'s
      * metadata.
      *
-     * @param[node] The node of interest
-     * @return The [OpenGLObjectState] of the [Node]
+     * @param[renderable] The node of interest
+     * @return The [OpenGLObjectState] of the [Renderable]
      */
-    fun getOpenGLObjectStateFromNode(node: Node): OpenGLObjectState {
-        return node.metadata["OpenGLRenderer"] as OpenGLObjectState
+    fun getOpenGLObjectStateFromNode(renderable: Renderable): OpenGLObjectState {
+        return renderable.metadata["OpenGLRenderer"] as OpenGLObjectState
     }
 
     /**
@@ -1065,10 +1069,11 @@ open class OpenGLRenderer(hub: Hub,
      * before [render].
      */
     @Synchronized override fun initializeScene() {
-        scene.discover(scene, { it is HasGeometry })
-            .forEach { it ->
-                it.metadata["OpenGLRenderer"] = OpenGLObjectState()
-                initializeNode(it)
+        scene.discover(scene, { it.geometryOrNull() != null })
+            .forEach { node ->
+                val renderable = node.renderableOrNull()
+                if(renderable != null) renderable.metadata["OpenGLRenderer"] = OpenGLObjectState()
+                initializeNode(node)
             }
 
         scene.initialized = true
@@ -1082,7 +1087,9 @@ open class OpenGLRenderer(hub: Hub,
 
         val hmd = hub?.getWorkingHMDDisplay()?.wantsVR(settings)
 
-        cam.view = cam.getTransformation()
+        val camSpatial = cam.spatial()
+
+        camSpatial.view = camSpatial.getTransformation()
 
         buffers.VRParameters.reset()
         val vrUbo = uboCache.computeIfAbsent("VRParameters") {
@@ -1091,19 +1098,19 @@ open class OpenGLRenderer(hub: Hub,
 
         vrUbo.add("projection0", {
             (hmd?.getEyeProjection(0, cam.nearPlaneDistance, cam.farPlaneDistance)
-                ?: cam.projection)
+                ?: camSpatial.projection)
         })
         vrUbo.add("projection1", {
             (hmd?.getEyeProjection(1, cam.nearPlaneDistance, cam.farPlaneDistance)
-                ?: cam.projection)
+                ?: camSpatial.projection)
         })
         vrUbo.add("inverseProjection0", {
             Matrix4f(hmd?.getEyeProjection(0, cam.nearPlaneDistance, cam.farPlaneDistance)
-                ?: cam.projection).invert()
+                ?: camSpatial.projection).invert()
         })
         vrUbo.add("inverseProjection1", {
             Matrix4f(hmd?.getEyeProjection(1, cam.nearPlaneDistance, cam.farPlaneDistance)
-                ?: cam.projection).invert()
+                ?: camSpatial.projection).invert()
         })
         vrUbo.add("headShift", { hmd?.getHeadToEyeTransform(0) ?: Matrix4f().identity() })
         vrUbo.add("IPD", { hmd?.getIPD() ?: 0.05f })
@@ -1117,11 +1124,14 @@ open class OpenGLRenderer(hub: Hub,
 
         sceneUBOs.forEach { node ->
             var nodeUpdated: Boolean by StickyBoolean(initial = false)
-            if (!node.metadata.containsKey(className)) {
+            val renderable = node.renderableOrNull() ?: return@forEach
+            val material = node.materialOrNull() ?: return@forEach
+            val spatial = node.spatialOrNull()
+            if (!renderable.metadata.containsKey(className)) {
                 return@forEach
             }
 
-            val s = node.metadata[className] as? OpenGLObjectState
+            val s = renderable.metadata[className] as? OpenGLObjectState
             if(s == null) {
                 logger.warn("Could not get OpenGLObjectState for ${node.name}")
                 return@forEach
@@ -1137,10 +1147,10 @@ open class OpenGLRenderer(hub: Hub,
 
             var bufferOffset = ubo.advanceBackingBuffer()
             ubo.offset = bufferOffset
-            node.view.set(cam.view)
+            spatial?.view?.set(camSpatial.view)
             nodeUpdated = ubo.populate(offset = bufferOffset.toLong())
 
-            val materialUbo = (node.metadata["OpenGLRenderer"]!! as OpenGLObjectState).UBOs.getValue("MaterialProperties")
+            val materialUbo = (renderable.metadata["OpenGLRenderer"]!! as OpenGLObjectState).UBOs.getValue("MaterialProperties")
             bufferOffset = ubo.advanceBackingBuffer()
             materialUbo.offset = bufferOffset
 
@@ -1156,7 +1166,7 @@ open class OpenGLRenderer(hub: Hub,
 
             nodeUpdated = loadTexturesForNode(node, s)
 
-            nodeUpdated = if(node.material.materialHashCode() != s.materialHash) {
+            nodeUpdated = if(material.materialHashCode() != s.materialHash) {
                 s.initialized = false
                 initializeNode(node)
                 true
@@ -1180,13 +1190,13 @@ open class OpenGLRenderer(hub: Hub,
             OpenGLUBO(backingBuffer = buffers.LightParameters)
         }
 
-        lightUbo.add("ViewMatrix0", { cam.getTransformationForEye(0) })
-        lightUbo.add("ViewMatrix1", { cam.getTransformationForEye(1) })
-        lightUbo.add("InverseViewMatrix0", { cam.getTransformationForEye(0).invert() })
-        lightUbo.add("InverseViewMatrix1", { cam.getTransformationForEye(1).invert() })
-        lightUbo.add("ProjectionMatrix", { cam.projection })
-        lightUbo.add("InverseProjectionMatrix", { Matrix4f(cam.projection).invert() })
-        lightUbo.add("CamPosition", { cam.position })
+        lightUbo.add("ViewMatrix0", { camSpatial.getTransformationForEye(0) })
+        lightUbo.add("ViewMatrix1", { camSpatial.getTransformationForEye(1) })
+        lightUbo.add("InverseViewMatrix0", { camSpatial.getTransformationForEye(0).invert() })
+        lightUbo.add("InverseViewMatrix1", { camSpatial.getTransformationForEye(1).invert() })
+        lightUbo.add("ProjectionMatrix", { camSpatial.projection })
+        lightUbo.add("InverseProjectionMatrix", { Matrix4f(camSpatial.projection).invert() })
+        lightUbo.add("CamPosition", { camSpatial.position })
 //        lightUbo.add("numLights", { lights.size })
 
 //        lights.forEachIndexed { i, light ->
@@ -1221,33 +1231,34 @@ open class OpenGLRenderer(hub: Hub,
     /**
      * Update a [Node]'s geometry, if needed and run it's preDraw() routine.
      *
-     * @param[n] The Node to update and preDraw()
+     * @param[node] The Node to update and preDraw()
      */
-    private fun preDrawAndUpdateGeometryForNode(n: Node) {
-        if (n is HasGeometry) {
-            if (n.dirty) {
-                n.preUpdate(this, hub)
-                if (n.lock.tryLock()) {
-                    if (n.vertices.remaining() > 0 && n.normals.remaining() > 0) {
-                        updateVertices(n)
-                        updateNormals(n)
+    private fun preDrawAndUpdateGeometryForNode(node: Node) {
+        val renderable = node.renderableOrNull() ?: return
+        node.ifGeometry {
+            if (dirty) {
+                renderable.preUpdate(this@OpenGLRenderer, hub)
+                if (node.lock.tryLock()) {
+                    if (vertices.remaining() > 0 && normals.remaining() > 0) {
+                        updateVertices(getOpenGLObjectStateFromNode(renderable))
+                        updateNormals(getOpenGLObjectStateFromNode(renderable))
                     }
 
-                    if (n.texcoords.remaining() > 0) {
-                        updateTextureCoords(n)
+                    if (texcoords.remaining() > 0) {
+                        updateTextureCoords(getOpenGLObjectStateFromNode(renderable))
                     }
 
-                    if (n.indices.remaining() > 0) {
-                        updateIndices(n)
+                    if (indices.remaining() > 0) {
+                        updateIndices(getOpenGLObjectStateFromNode(renderable))
                     }
 
-                    n.dirty = false
+                    dirty = false
 
-                    n.lock.unlock()
+                    node.lock.unlock()
                 }
             }
 
-            n.preDraw()
+            renderable.preDraw()
         }
     }
 
@@ -1365,15 +1376,16 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     private fun updateInstanceBuffers(sceneObjects:List<Node>): Boolean {
-        val instanceMasters = sceneObjects.filter { it.instances.size > 0 }
+        val instanceMasters = sceneObjects.filter { it is InstancedNode }.map { it as InstancedNode }
 
         instanceMasters.forEach { parent ->
-            var metadata = parent.rendererMetadata()
+            val renderable = parent.renderableOrNull()
+            var metadata = renderable?.rendererMetadata()
 
             if(metadata == null) {
-                parent.metadata["OpenGLRenderer"] = OpenGLObjectState()
+                if(renderable != null) renderable.metadata["OpenGLRenderer"] = OpenGLObjectState()
                 initializeNode(parent)
-                metadata = parent.rendererMetadata()
+                metadata = renderable?.rendererMetadata()
             }
 
             updateInstanceBuffer(parent, metadata)
@@ -1382,7 +1394,7 @@ open class OpenGLRenderer(hub: Hub,
         return instanceMasters.isNotEmpty()
     }
 
-    private fun updateInstanceBuffer(parentNode: Node, state: OpenGLObjectState?): OpenGLObjectState {
+    private fun updateInstanceBuffer(parentNode: InstancedNode, state: OpenGLObjectState?): OpenGLObjectState {
         if(state == null) {
             throw IllegalStateException("Metadata for ${parentNode.name} is null at updateInstanceBuffer(${parentNode.name}). This is a bug.")
         }
@@ -1421,7 +1433,9 @@ open class OpenGLRenderer(hub: Hub,
         val index = AtomicInteger(0)
         instances.parallelStream().forEach { node ->
             if(node.visible) {
-                node.updateWorld(true, false)
+                node.ifSpatial {
+                    updateWorld(true, false)
+                }
 
                 stagingBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN).run {
                     ubo.populateParallel(this,
@@ -1539,17 +1553,21 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     protected fun destroyNode(node: Node) {
-        node.metadata.remove("OpenGLRenderer")
-        val s = node.metadata["OpenGLRenderer"] as? OpenGLObjectState ?: return
+        node.ifRenderable {
+            this.metadata.remove("OpenGLRenderer")
+            val s = this.metadata["OpenGLRenderer"] as? OpenGLObjectState ?: return@ifRenderable
 
-        gl.glDeleteBuffers(s.mVertexBuffers.size, s.mVertexBuffers, 0)
-        gl.glDeleteBuffers(1, s.mIndexBuffer, 0)
+            gl.glDeleteBuffers(s.mVertexBuffers.size, s.mVertexBuffers, 0)
+            gl.glDeleteBuffers(1, s.mIndexBuffer, 0)
 
-        s.additionalBufferIds.forEach { _, id ->
-            gl.glDeleteBuffers(1, intArrayOf(id), 0)
+            s.additionalBufferIds.forEach { _, id ->
+                gl.glDeleteBuffers(1, intArrayOf(id), 0)
+            }
+
+            node.metadata.remove("OpenGLRenderer")
+
+            initialized = false
         }
-
-        node.initialized = false
     }
 
     protected var previousSceneObjects: HashSet<Node> = HashSet(256)
@@ -1777,41 +1795,35 @@ open class OpenGLRenderer(hub: Hub,
 
                 var currentShader: OpenGLShaderProgram? = null
 
-                val seenDelegates = ArrayList<Node>(5)
+                val seenDelegates = ArrayList<Renderable>(5)
                 actualObjects.forEach renderLoop@ { node ->
-                    val n = if(node is DelegatesRendering) {
-                        val delegate = node.delegate
-                        if(node.delegationType == DelegationType.OncePerDelegate && delegate != null) {
-                            if(delegate in seenDelegates) {
-                                return@renderLoop
-                            } else {
-                                seenDelegates.add(delegate)
-                                delegate
-                            }
+                    val renderable = node.renderableOrNull() ?: return@renderLoop
+                    val material = node.materialOrNull() ?: return@renderLoop
+                    if(node is DelegatesProperties && node.getDelegationType() == DelegationType.OncePerDelegate) {
+                        if(seenDelegates.contains(renderable)) {
+                            return@renderLoop
                         } else {
-                            node.delegate ?: return@renderLoop
+                            seenDelegates.add(renderable)
                         }
-                    } else {
-                        node
                     }
 
-                    if (pass.passConfig.renderOpaque && n.material.blending.transparent && pass.passConfig.renderOpaque != pass.passConfig.renderTransparent) {
+                    if (pass.passConfig.renderOpaque && material.blending.transparent && pass.passConfig.renderOpaque != pass.passConfig.renderTransparent) {
                         return@renderLoop
                     }
 
-                    if (pass.passConfig.renderTransparent && !n.material.blending.transparent && pass.passConfig.renderOpaque != pass.passConfig.renderTransparent) {
+                    if (pass.passConfig.renderTransparent && !material.blending.transparent && pass.passConfig.renderOpaque != pass.passConfig.renderTransparent) {
                         return@renderLoop
                     }
 
                     gl.glEnable(GL4.GL_CULL_FACE)
-                    when(n.material.cullingMode) {
+                    when(material.cullingMode) {
                         Material.CullingMode.None -> gl.glDisable(GL4.GL_CULL_FACE)
                         Material.CullingMode.Front -> gl.glCullFace(GL4.GL_FRONT)
                         Material.CullingMode.Back -> gl.glCullFace(GL4.GL_BACK)
                         Material.CullingMode.FrontAndBack -> gl.glCullFace(GL4.GL_FRONT_AND_BACK)
                     }
 
-                   val depthTest = when(n.material.depthTest) {
+                   val depthTest = when(material.depthTest) {
                         Material.DepthTest.Less -> GL4.GL_LESS
                         Material.DepthTest.Greater -> GL4.GL_GREATER
                         Material.DepthTest.LessEqual -> GL4.GL_LEQUAL
@@ -1823,14 +1835,14 @@ open class OpenGLRenderer(hub: Hub,
 
                     gl.glDepthFunc(depthTest)
 
-                    if(n.material.wireframe) {
+                    if(material.wireframe) {
                         gl.glPolygonMode(GL4.GL_FRONT_AND_BACK, GL4.GL_LINE)
                     } else {
                         gl.glPolygonMode(GL4.GL_FRONT_AND_BACK, GL4.GL_FILL)
                     }
 
-                    if (n.material.blending.transparent) {
-                        with(n.material.blending) {
+                    if (material.blending.transparent) {
+                        with(material.blending) {
                             gl.glBlendFuncSeparate(
                                 sourceColorBlendFactor.toOpenGL(),
                                 destinationColorBlendFactor.toOpenGL(),
@@ -1845,13 +1857,13 @@ open class OpenGLRenderer(hub: Hub,
                         }
                     }
 
-                    if (!n.metadata.containsKey("OpenGLRenderer") || !n.initialized) {
-                        n.metadata["OpenGLRenderer"] = OpenGLObjectState()
-                        initializeNode(n)
+                    if (!renderable.metadata.containsKey("OpenGLRenderer") || !node.initialized) {
+                        renderable.metadata["OpenGLRenderer"] = OpenGLObjectState()
+                        initializeNode(node)
                         return@renderLoop
                     }
 
-                    val s = getOpenGLObjectStateFromNode(n)
+                    val s = getOpenGLObjectStateFromNode(renderable)
 
 
                     val shader = s.shader ?: pass.defaultShader!!
@@ -1931,10 +1943,10 @@ open class OpenGLRenderer(hub: Hub,
 
                         if(shader.uboSpecs.containsKey(actualName) && shader.isValid()) {
                             val index = shader.getUniformBlockIndex(actualName)
-                            logger.trace("Binding {} for {}, index={}, binding={}, size={}", actualName, n.name, index, binding, ubo.getSize())
+                            logger.trace("Binding {} for {}, index={}, binding={}, size={}", actualName, node.name, index, binding, ubo.getSize())
 
                             if (index == -1) {
-                                logger.error("Failed to bind UBO $actualName for ${n.name} to $binding")
+                                logger.error("Failed to bind UBO $actualName for ${node.name} to $binding")
                             } else {
                                 gl.glUniformBlockBinding(shader.id, index, binding)
                                 gl.glBindBufferRange(GL4.GL_UNIFORM_BUFFER, binding,
@@ -1966,10 +1978,10 @@ open class OpenGLRenderer(hub: Hub,
                         }
                     }
 
-                    if(n.instances.size > 0) {
-                        drawNodeInstanced(n)
+                    if(node is InstancedNode) {
+                        drawNodeInstanced(node)
                     } else {
-                        drawNode(n)
+                        drawNode(node)
                     }
                 }
             } else {
@@ -2237,7 +2249,9 @@ open class OpenGLRenderer(hub: Hub,
         quad = nodeStore.getOrPut(quadName) {
             val q = Plane(Vector3f(1.0f, 1.0f, 0.0f))
 
-            q.metadata["OpenGLRenderer"] = OpenGLObjectState()
+            q.ifRenderable {
+                this.metadata["OpenGLRenderer"] = OpenGLObjectState()
+            }
             initializeNode(q)
 
             q
@@ -2260,25 +2274,23 @@ open class OpenGLRenderer(hub: Hub,
      *
      * If the [Node] implements [HasGeometry], it's geometry is also initialized by this function.
      *
-     * @param[n]: The [Node] to initialise.
+     * @param[node]: The [Node] to initialise.
      * @return True if the initialisation went alright, False if it failed.
      */
-    @Synchronized fun initializeNode(n: Node): Boolean {
-        val node = if(n is DelegatesRendering) {
-            n.delegate ?: return false
-        } else {
-            n
-        }
+    @Synchronized fun initializeNode(node: Node): Boolean {
+        val renderable = node.renderableOrNull() ?: return false
+        val material = node.materialOrNull() ?: return false
+        val spatial = node.spatialOrNull()
 
         if(!node.lock.tryLock()) {
             return false
         }
 
-        if(node.rendererMetadata() == null) {
-            node.metadata["OpenGLRenderer"] = OpenGLObjectState()
+        if(renderable.rendererMetadata() == null) {
+            renderable.metadata["OpenGLRenderer"] = OpenGLObjectState()
         }
 
-        val s = node.metadata["OpenGLRenderer"] as OpenGLObjectState
+        val s = renderable.metadata["OpenGLRenderer"] as OpenGLObjectState
 
         if (s.initialized) {
             return true
@@ -2292,8 +2304,8 @@ open class OpenGLRenderer(hub: Hub,
         gl.glGenBuffers(1, s.mIndexBuffer, 0)
 
         when {
-            node.material is ShaderMaterial -> {
-                val shaders = (node.material as ShaderMaterial).shaders
+            material is ShaderMaterial -> {
+                val shaders = material.shaders
 
                 try {
                     s.shader = prepareShaderProgram(shaders)
@@ -2305,28 +2317,30 @@ open class OpenGLRenderer(hub: Hub,
             else -> s.shader = null
         }
 
-        if (node is HasGeometry) {
-            setVerticesAndCreateBufferForNode(node)
-            setNormalsAndCreateBufferForNode(node)
+        node.ifGeometry {
+            setVerticesAndCreateBufferForNode(s)
+            setNormalsAndCreateBufferForNode(s)
 
-            if (node.texcoords.limit() > 0) {
-                setTextureCoordsAndCreateBufferForNode(node)
+            if (this.texcoords.limit() > 0) {
+                setTextureCoordsAndCreateBufferForNode(s)
             }
 
-            if (node.indices.limit() > 0) {
-                setIndicesAndCreateBufferForNode(node)
+            if (this.indices.limit() > 0) {
+                setIndicesAndCreateBufferForNode(s)
             }
 
         }
 
-        s.materialHash = node.material.materialHashCode()
+        s.materialHash = material.materialHashCode()
 
         val matricesUbo = OpenGLUBO(backingBuffer = buffers.UBOs)
         with(matricesUbo) {
             name = "Matrices"
-            add("ModelMatrix", { node.world })
-            add("NormalMatrix", { Matrix4f(node.world).invert().transpose() })
-            add("isBillboard", { node.isBillboard.toInt() })
+            if(spatial != null) {
+                add("ModelMatrix", { spatial.world })
+                add("NormalMatrix", { Matrix4f(spatial.world).invert().transpose() })
+            }
+            add("isBillboard", { renderable.isBillboard.toInt() })
 
             sceneUBOs.add(node)
 
@@ -2339,34 +2353,34 @@ open class OpenGLRenderer(hub: Hub,
 
         with(materialUbo) {
             name = "MaterialProperties"
-            add("materialType", { node.materialToMaterialType() })
-            add("Ka", { node.material.ambient })
-            add("Kd", { node.material.diffuse })
-            add("Ks", { node.material.specular })
-            add("Roughness", { node.material.roughness })
-            add("Metallic", { node.material.metallic })
-            add("Opacity", { node.material.blending.opacity })
+            add("materialType", { material.materialToMaterialType(s) })
+            add("Ka", { material.ambient })
+            add("Kd", { material.diffuse })
+            add("Ks", { material.specular })
+            add("Roughness", { material.roughness })
+            add("Metallic", { material.metallic })
+            add("Opacity", { material.blending.opacity })
 
             s.UBOs.put("MaterialProperties", this)
         }
 
-        if (node.javaClass.kotlin.memberProperties.filter { it.findAnnotation<ShaderProperty>() != null }.count() > 0) {
+        if (renderable.parent.javaClass.kotlin.memberProperties.filter { it.findAnnotation<ShaderProperty>() != null }.count() > 0) {
             val shaderPropertyUBO = OpenGLUBO(backingBuffer = buffers.ShaderProperties)
             with(shaderPropertyUBO) {
                 name = "ShaderProperties"
 
-                val shader = if (node.material is ShaderMaterial) {
+                val shader = if (material is ShaderMaterial) {
                     s.shader
                 } else {
                     renderpasses.filter {
                         (it.value.passConfig.type == RenderConfigReader.RenderpassType.geometry || it.value.passConfig.type == RenderConfigReader.RenderpassType.lights)
-                            && it.value.passConfig.renderTransparent == node.material.blending.transparent
+                            && it.value.passConfig.renderTransparent == material.blending.transparent
                     }.entries.firstOrNull()?.value?.defaultShader
                 }
 
                 logger.debug("Shader properties are: ${shader?.getShaderPropertyOrder()}")
                 shader?.getShaderPropertyOrder()?.forEach { name, offset ->
-                    add(name, { node.getShaderProperty(name) ?: 0 }, offset)
+                    add(name, { renderable.parent.getShaderProperty(name) ?: 0 }, offset)
                 }
             }
 
@@ -2375,7 +2389,7 @@ open class OpenGLRenderer(hub: Hub,
 
         s.initialized = true
         node.initialized = true
-        node.metadata[className] = s
+        renderable.metadata[className] = s
 
         s.initialized = true
         node.lock.unlock()
@@ -2384,29 +2398,26 @@ open class OpenGLRenderer(hub: Hub,
 
     private val defaultTextureNames = arrayOf("ambient", "diffuse", "specular", "normal", "alphamask", "displacement")
 
-    private fun Node.materialToMaterialType(): Int {
+    private fun Material.materialToMaterialType(s: OpenGLObjectState): Int {
         var materialType = 0
-        val s = this.metadata["OpenGLRenderer"] as? OpenGLObjectState ?: return 0
 
-
-
-        if (this.material.textures.containsKey("ambient") && !s.defaultTexturesFor.contains("ambient")) {
+        if (this.textures.containsKey("ambient") && !s.defaultTexturesFor.contains("ambient")) {
             materialType = materialType or MATERIAL_HAS_AMBIENT
         }
 
-        if (this.material.textures.containsKey("diffuse") && !s.defaultTexturesFor.contains("diffuse")) {
+        if (this.textures.containsKey("diffuse") && !s.defaultTexturesFor.contains("diffuse")) {
             materialType = materialType or MATERIAL_HAS_DIFFUSE
         }
 
-        if (this.material.textures.containsKey("specular") && !s.defaultTexturesFor.contains("specular")) {
+        if (this.textures.containsKey("specular") && !s.defaultTexturesFor.contains("specular")) {
             materialType = materialType or MATERIAL_HAS_SPECULAR
         }
 
-        if (this.material.textures.containsKey("normal") && !s.defaultTexturesFor.contains("normal")) {
+        if (this.textures.containsKey("normal") && !s.defaultTexturesFor.contains("normal")) {
             materialType = materialType or MATERIAL_HAS_NORMAL
         }
 
-        if (this.material.textures.containsKey("alphamask") && !s.defaultTexturesFor.contains("alphamask")) {
+        if (this.textures.containsKey("alphamask") && !s.defaultTexturesFor.contains("alphamask")) {
             materialType = materialType or MATERIAL_HAS_ALPHAMASK
         }
 
@@ -2513,10 +2524,11 @@ open class OpenGLRenderer(hub: Hub,
      */
     @Suppress("USELESS_ELVIS")
     private fun loadTexturesForNode(node: Node, s: OpenGLObjectState): Boolean {
+        val material = node.materialOrNull() ?: return false
         var changed = false
         val last = s.texturesLastSeen
         val now = System.nanoTime()
-        node.material.textures.forEachChanged(last) { (type, texture) ->
+        material.textures.forEachChanged(last) { (type, texture) ->
             changed = true
             logger.debug("Loading texture $texture for ${node.name}")
 
@@ -2648,24 +2660,19 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     /**
-     * Creates VAOs and VBO for a given [Node]'s vertices.
-     *
-     * @param[node] The [Node] to create the VAO/VBO for.
+     * Creates VAOs and VBO for a given [Geometry]'s vertices.
      */
-    fun setVerticesAndCreateBufferForNode(node: Node) {
-        updateVertices(node)
+    fun Geometry.setVerticesAndCreateBufferForNode(s: OpenGLObjectState) {
+        updateVertices(s)
     }
 
     /**
-     * Updates a [Node]'s vertices.
-     *
-     * @param[node] The [Node] to update the vertices for.
+     * Updates a [Geometry]'s vertices.
      */
-    fun updateVertices(node: Node) {
-        val s = getOpenGLObjectStateFromNode(node)
-        val pVertexBuffer: FloatBuffer = (node as HasGeometry).vertices.duplicate()
+    fun Geometry.updateVertices(s: OpenGLObjectState) {
+        val pVertexBuffer: FloatBuffer = vertices.duplicate()
 
-        s.mStoredPrimitiveCount = pVertexBuffer.remaining() / node.vertexSize
+        s.mStoredPrimitiveCount = pVertexBuffer.remaining() / vertexSize
 
         gl.glBindVertexArray(s.mVertexArrayObject[0])
         gl.glBindBuffer(GL4.GL_ARRAY_BUFFER, s.mVertexBuffers[0])
@@ -2677,7 +2684,7 @@ open class OpenGLRenderer(hub: Hub,
             GL4.GL_DYNAMIC_DRAW)
 
         gl.glVertexAttribPointer(0,
-            node.vertexSize,
+            vertexSize,
             GL4.GL_FLOAT,
             false,
             0,
@@ -2688,13 +2695,10 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     /**
-     * Creates VAOs and VBO for a given [Node]'s normals.
-     *
-     * @param[node] The [Node] to create the normals VBO for.
+     * Creates VAOs and VBO for a given [Geometry]'s normals.
      */
-    fun setNormalsAndCreateBufferForNode(node: Node) {
-        val s = getOpenGLObjectStateFromNode(node)
-        val pNormalBuffer: FloatBuffer = (node as HasGeometry).normals.duplicate()
+    fun Geometry.setNormalsAndCreateBufferForNode(s: OpenGLObjectState) {
+        val pNormalBuffer: FloatBuffer = normals.duplicate()
 
         gl.glBindVertexArray(s.mVertexArrayObject[0])
         gl.glBindBuffer(GL4.GL_ARRAY_BUFFER, s.mVertexBuffers[1])
@@ -2707,7 +2711,7 @@ open class OpenGLRenderer(hub: Hub,
                 GL4.GL_DYNAMIC_DRAW)
 
             gl.glVertexAttribPointer(1,
-                node.vertexSize,
+                vertexSize,
                 GL4.GL_FLOAT,
                 false,
                 0,
@@ -2719,13 +2723,10 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     /**
-     * Updates a given [Node]'s normals.
-     *
-     * @param[node] The [Node] whose normals need updating.
+     * Updates a given [Geometry]'s normals.
      */
-    fun updateNormals(node: Node) {
-        val s = getOpenGLObjectStateFromNode(node)
-        val pNormalBuffer: FloatBuffer = (node as HasGeometry).normals.duplicate()
+    fun Geometry.updateNormals(s: OpenGLObjectState) {
+        val pNormalBuffer: FloatBuffer = normals.duplicate()
 
         gl.glBindVertexArray(s.mVertexArrayObject[0])
         gl.glBindBuffer(GL4.GL_ARRAY_BUFFER, s.mVertexBuffers[1])
@@ -2737,7 +2738,7 @@ open class OpenGLRenderer(hub: Hub,
             GL4.GL_DYNAMIC_DRAW)
 
         gl.glVertexAttribPointer(1,
-            node.vertexSize,
+            vertexSize,
             GL4.GL_FLOAT,
             false,
             0,
@@ -2748,22 +2749,17 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     /**
-     * Creates VAOs and VBO for a given [Node]'s texcoords.
-     *
-     * @param[node] The [Node] to create the texcoord VBO for.
+     * Creates VAOs and VBO for a given [Geometry]'s texcoords.
      */
-    fun setTextureCoordsAndCreateBufferForNode(node: Node) {
-        updateTextureCoords(node)
+    fun Geometry.setTextureCoordsAndCreateBufferForNode(s: OpenGLObjectState) {
+        updateTextureCoords(s)
     }
 
     /**
-     * Updates a given [Node]'s texcoords.
-     *
-     * @param[node] The [Node] whose texcoords need updating.
+     * Updates a given [Geometry]'s texcoords.
      */
-    fun updateTextureCoords(node: Node) {
-        val s = getOpenGLObjectStateFromNode(node)
-        val pTextureCoordsBuffer: FloatBuffer = (node as HasGeometry).texcoords.duplicate()
+    fun Geometry.updateTextureCoords(s: OpenGLObjectState) {
+        val pTextureCoordsBuffer: FloatBuffer = texcoords.duplicate()
 
         gl.glBindVertexArray(s.mVertexArrayObject[0])
         gl.glBindBuffer(GL4.GL_ARRAY_BUFFER,
@@ -2776,7 +2772,7 @@ open class OpenGLRenderer(hub: Hub,
             GL4.GL_DYNAMIC_DRAW)
 
         gl.glVertexAttribPointer(2,
-            node.texcoordSize,
+            texcoordSize,
             GL4.GL_FLOAT,
             false,
             0,
@@ -2787,13 +2783,10 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     /**
-     * Creates a index buffer for a given [Node]'s indices.
-     *
-     * @param[node] The [Node] to create the index buffer for.
+     * Creates a index buffer for a given [Geometry]'s indices.
      */
-    fun setIndicesAndCreateBufferForNode(node: Node) {
-        val s = getOpenGLObjectStateFromNode(node)
-        val pIndexBuffer: IntBuffer = (node as HasGeometry).indices.duplicate()
+    fun Geometry.setIndicesAndCreateBufferForNode(s: OpenGLObjectState) {
+        val pIndexBuffer: IntBuffer = indices.duplicate()
 
         s.mStoredIndexCount = pIndexBuffer.remaining()
 
@@ -2810,13 +2803,10 @@ open class OpenGLRenderer(hub: Hub,
     }
 
     /**
-     * Updates a given [Node]'s indices.
-     *
-     * @param[node] The [Node] whose indices need updating.
+     * Updates a given [Geometry]'s indices.
      */
-    fun updateIndices(node: Node) {
-        val s = getOpenGLObjectStateFromNode(node)
-        val pIndexBuffer: IntBuffer = (node as HasGeometry).indices.duplicate()
+    fun Geometry.updateIndices(s: OpenGLObjectState) {
+        val pIndexBuffer: IntBuffer = indices.duplicate()
 
         s.mStoredIndexCount = pIndexBuffer.remaining()
 
@@ -2839,29 +2829,33 @@ open class OpenGLRenderer(hub: Hub,
      * @param[offset] offset in the array or index buffer.
      */
     fun drawNode(node: Node, offset: Int = 0, count: Int? = null) {
-        val s = getOpenGLObjectStateFromNode(node)
+        val renderable = node.renderableOrNull() ?: return
+        val s = getOpenGLObjectStateFromNode(renderable)
 
         if (s.mStoredIndexCount == 0 && s.mStoredPrimitiveCount == 0) {
             return
         }
         logger.trace("Drawing {} with {}, {} primitives, {} indices", node.name, s.shader?.modules?.entries?.joinToString(", "), s.mStoredPrimitiveCount, s.mStoredIndexCount)
-        gl.glBindVertexArray(s.mVertexArrayObject[0])
 
-        if (s.mStoredIndexCount > 0) {
-            gl.glBindBuffer(GL4.GL_ELEMENT_ARRAY_BUFFER,
-                s.mIndexBuffer[0])
-            gl.glDrawElements((node as HasGeometry).geometryType.toOpenGLType(),
-                count ?: s.mStoredIndexCount,
-                GL4.GL_UNSIGNED_INT,
-                offset.toLong())
+        node.ifGeometry {
+            gl.glBindVertexArray(s.mVertexArrayObject[0])
 
-            gl.glBindBuffer(GL4.GL_ELEMENT_ARRAY_BUFFER, 0)
-        } else {
-            gl.glDrawArrays((node as HasGeometry).geometryType.toOpenGLType(), offset, count ?: s.mStoredPrimitiveCount)
-        }
+            if (s.mStoredIndexCount > 0) {
+                gl.glBindBuffer(GL4.GL_ELEMENT_ARRAY_BUFFER,
+                    s.mIndexBuffer[0])
+                gl.glDrawElements(geometryType.toOpenGLType(),
+                    count ?: s.mStoredIndexCount,
+                    GL4.GL_UNSIGNED_INT,
+                    offset.toLong())
+
+                gl.glBindBuffer(GL4.GL_ELEMENT_ARRAY_BUFFER, 0)
+            } else {
+                gl.glDrawArrays(geometryType.toOpenGLType(), offset, count ?: s.mStoredPrimitiveCount)
+            }
 
 //        gl.glUseProgram(0)
 //        gl.glBindVertexArray(0)
+        }
     }
 
     /**
@@ -2871,26 +2865,29 @@ open class OpenGLRenderer(hub: Hub,
      * @param[offset] offset in the array or index buffer.
      */
     protected fun drawNodeInstanced(node: Node, offset: Long = 0) {
-        val s = getOpenGLObjectStateFromNode(node)
+        node.ifRenderable {
+            val s = getOpenGLObjectStateFromNode(this)
+            node.ifGeometry {
+                gl.glBindVertexArray(s.mVertexArrayObject[0])
 
-        gl.glBindVertexArray(s.mVertexArrayObject[0])
+                if (s.mStoredIndexCount > 0) {
+                    gl.glDrawElementsInstanced(
+                        geometryType.toOpenGLType(),
+                        s.mStoredIndexCount,
+                        GL4.GL_UNSIGNED_INT,
+                        offset,
+                        s.instanceCount)
+                } else {
+                    gl.glDrawArraysInstanced(
+                        geometryType.toOpenGLType(),
+                        0, s.mStoredPrimitiveCount, s.instanceCount)
 
-        if (s.mStoredIndexCount > 0) {
-            gl.glDrawElementsInstanced(
-                (node as HasGeometry).geometryType.toOpenGLType(),
-                s.mStoredIndexCount,
-                GL4.GL_UNSIGNED_INT,
-                offset,
-                s.instanceCount)
-        } else {
-            gl.glDrawArraysInstanced(
-                (node as HasGeometry).geometryType.toOpenGLType(),
-                0, s.mStoredPrimitiveCount, s.instanceCount)
-
-        }
+                }
 
 //        gl.glUseProgram(0)
 //        gl.glBindVertexArray(0)
+            }
+        }
     }
 
     override fun screenshot(filename: String, overwrite: Boolean) {

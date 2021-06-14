@@ -60,8 +60,8 @@ class SDFFontAtlasTests {
         }
 
         val mesh = sdf.createMeshForString("hello world")
-        assertTrue(mesh.vertices.remaining() > 0)
-        assertTrue(mesh.normals.remaining() > 0)
-        assertTrue(mesh.texcoords.remaining() > 0)
+        assertTrue(mesh.geometry().vertices.remaining() > 0)
+        assertTrue(mesh.geometry().normals.remaining() > 0)
+        assertTrue(mesh.geometry().texcoords.remaining() > 0)
     }
 }

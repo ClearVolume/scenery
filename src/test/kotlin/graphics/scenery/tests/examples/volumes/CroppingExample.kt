@@ -20,6 +20,8 @@ import org.scijava.ui.behaviour.ClickBehaviour
 import tpietzsch.example2.VolumeViewerOptions
 import kotlin.concurrent.thread
 import graphics.scenery.numerics.Random
+import graphics.scenery.attribute.material.Material
+import graphics.scenery.attribute.spatial.Spatial
 
 /**
  * Volume Cropping Example using the "BDV Rendering Example loading a RAII"
@@ -44,24 +46,27 @@ class CroppingExample : SceneryBase("Volume Cropping example", 1280, 720) {
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
             perspectiveCamera(50.0f, windowWidth, windowHeight)
-
-            position = Vector3f(0.0f, 0.0f, 5.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 5.0f)
+            }
             scene.addChild(this)
         }
 
 
         val shell = Box(Vector3f(10.0f, 10.0f, 10.0f), insideNormals = true)
-        shell.material.cullingMode = Material.CullingMode.None
-        shell.material.diffuse = Vector3f(0.2f, 0.2f, 0.2f)
-        shell.material.specular = Vector3f(0.0f)
-        shell.material.ambient = Vector3f(0.0f)
+        shell.material {
+            cullingMode = Material.CullingMode.None
+            diffuse = Vector3f(0.2f, 0.2f, 0.2f)
+            specular = Vector3f(0.0f)
+            ambient = Vector3f(0.0f)
+        }
         scene.addChild(shell)
 
         Light.createLightTetrahedron<PointLight>(spread = 4.0f, radius = 15.0f, intensity = 0.5f)
             .forEach { scene.addChild(it) }
 
         val origin = Box(Vector3f(0.1f, 0.1f, 0.1f))
-        origin.material.diffuse = Vector3f(0.8f, 0.0f, 0.0f)
+        origin.material().diffuse = Vector3f(0.8f, 0.0f, 0.0f)
         scene.addChild(origin)
 
         val imp: ImagePlus = IJ.openImage("https://imagej.nih.gov/ij/images/t1-head.zip")
@@ -76,10 +81,12 @@ class CroppingExample : SceneryBase("Volume Cropping example", 1280, 720) {
 
         if (additionalVolumes) {
             fun addAdditionalVolume(base: Vector3f): Volume {
-                val vol2Pivot = Node()
+                val vol2Pivot = RichNode()
                 scene.addChild(vol2Pivot)
-                vol2Pivot.position = vol2Pivot.position + base
-                vol2Pivot.scale = Vector3f(0.5f)
+                vol2Pivot.spatial {
+                    position += base
+                    scale = Vector3f(0.5f)
+                }
 
                 volume2 =
                     Volume.fromRAI(img, UnsignedShortType(), AxisOrder.DEFAULT, "T1 head", hub, VolumeViewerOptions())
@@ -90,7 +97,7 @@ class CroppingExample : SceneryBase("Volume Cropping example", 1280, 720) {
                 scene.removeChild(slicingPlane2)
                 vol2Pivot.addChild(slicingPlane2)
                 slicingPlane2.addTargetVolume(volume2)
-                val animator2 = Animator(slicingPlane2)
+                val animator2 = Animator(slicingPlane2.spatial())
                 additionalAnimators = additionalAnimators + animator2
 
                 return volume2
@@ -110,9 +117,9 @@ class CroppingExample : SceneryBase("Volume Cropping example", 1280, 720) {
         }
     }
 
-    class Animator(val node: Node) {
-        private var moveDir = Random.random3DVectorFromRange(-1.0f, 1.0f) - node.position
-        private var rotationStart = Quaternionf(node.rotation)
+    class Animator(val spatial: Spatial) {
+        private var moveDir = Random.random3DVectorFromRange(-1.0f, 1.0f) - spatial.position
+        private var rotationStart = Quaternionf(spatial.rotation)
         private var rotationTarget = Random.randomQuaternion()
         private var startTime = System.currentTimeMillis()
 
@@ -120,15 +127,12 @@ class CroppingExample : SceneryBase("Volume Cropping example", 1280, 720) {
             val relDelta = (System.currentTimeMillis() - startTime) / 5000f
 
             val scaledMov = moveDir * (20f / 5000f)
-            node.position = node.position + scaledMov
-
-            rotationStart.nlerp(rotationTarget, relDelta, node.rotation)
-
-            node.needsUpdate = true
-
+            spatial.position += scaledMov
+            rotationStart.nlerp(rotationTarget, relDelta, spatial.rotation)
+            spatial.needsUpdate = true
             if (startTime + 5000 < System.currentTimeMillis()) {
-                moveDir = Random.random3DVectorFromRange(-1.0f, 1.0f) - node.position
-                rotationStart = Quaternionf(node.rotation)
+                moveDir = Random.random3DVectorFromRange(-1.0f, 1.0f) - spatial.position
+                rotationStart = Quaternionf(spatial.rotation)
                 rotationTarget = Random.randomQuaternion()
                 startTime = System.currentTimeMillis()
             }
@@ -139,7 +143,7 @@ class CroppingExample : SceneryBase("Volume Cropping example", 1280, 720) {
 
         val slicingPlane = createSlicingPlane()
         slicingPlane.addTargetVolume(volume)
-        val animator = Animator(slicingPlane)
+        val animator = Animator(slicingPlane.spatial())
 
         slicingPlanes = slicingPlanes + (slicingPlane to animator)
     }
@@ -160,12 +164,18 @@ class CroppingExample : SceneryBase("Volume Cropping example", 1280, 720) {
 
         val slicingPlaneVisual: Node
         slicingPlaneVisual = Box(Vector3f(1f, 0.01f, 1f))
-        slicingPlaneVisual.material.diffuse = Vector3f(0.0f, 0.8f, 0.0f)
+        slicingPlaneVisual.material {
+            diffuse = Vector3f(0.0f, 0.8f, 0.0f)
+        }
         slicingPlaneFunctionality.addChild(slicingPlaneVisual)
 
         val nose = Box(Vector3f(0.1f, 0.1f, 0.1f))
-        nose.material.diffuse = Vector3f(0.8f, 0.0f, 0.0f)
-        nose.position = Vector3f(0f, 0.05f, 0f)
+        nose.material {
+            diffuse = Vector3f(0.8f, 0.0f, 0.0f)
+        }
+        nose.spatial {
+            position = Vector3f(0f, 0.05f, 0f)
+        }
         slicingPlaneVisual.addChild(nose)
 
         return slicingPlaneFunctionality

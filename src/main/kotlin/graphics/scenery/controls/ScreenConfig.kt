@@ -144,13 +144,13 @@ class ScreenConfig {
             val mapper = ObjectMapper(YAMLFactory())
             mapper.registerModule(KotlinModule())
 
-            var stream = this::class.java.getResourceAsStream(path)
+            var stream = ScreenConfig::class.java.getResourceAsStream(path)
 
             if (stream == null) {
                 val p = Paths.get(path)
 
                 return if (!Files.exists(p)) {
-                    stream = this::class.java.getResourceAsStream("CAVEExample.yml")
+                    stream = ScreenConfig::class.java.getResourceAsStream("CAVEExample.yml")
                     logger.warn("Screen configuration not found at $path, returning default configuration.")
                     mapper.readValue(stream, ScreenConfig.Config::class.java)
                 } else {

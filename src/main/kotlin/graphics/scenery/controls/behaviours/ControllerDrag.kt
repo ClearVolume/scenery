@@ -51,12 +51,14 @@ open class ControllerDrag(val handedness: TrackerRole,
 
         if(last != null) {
             val node = draggedObjectFinder.invoke() ?: return
-            if(trackPosition) {
-                node.position = node.position + (current - last)
-            }
+            node.ifSpatial {
+                if(trackPosition) {
+                    position += current - last
+                }
 
-            if(trackRotation) {
-                node.rotation = currentRotation
+                if(trackRotation) {
+                    rotation = currentRotation
+                }
             }
 
             logger.debug("Node ${node.name} moved with $current - $last!")

@@ -1,8 +1,6 @@
 package graphics.scenery.volumes
 
-import graphics.scenery.BoundingGrid
-import graphics.scenery.Box
-import graphics.scenery.Node
+import graphics.scenery.*
 import graphics.scenery.controls.InputHandler
 import graphics.scenery.controls.behaviours.MouseDragSphere
 import graphics.scenery.effectors.LineRestrictionEffector
@@ -24,8 +22,8 @@ fun createOrthoView(volume: Volume) {
     val sliceXY = SlicingPlane()
     val sliceYZ = SlicingPlane()
 
-    sliceXY.rotation = sliceXY.rotation.rotateX((Math.PI / 2).toFloat())
-    sliceYZ.rotation = sliceYZ.rotation.rotateZ((Math.PI / 2).toFloat())
+    sliceXY.spatial().rotation = sliceXY.spatial().rotation.rotateX((Math.PI / 2).toFloat())
+    sliceYZ.spatial().rotation = sliceYZ.spatial().rotation.rotateZ((Math.PI / 2).toFloat())
 
     sliceXZ.addTargetVolume(volume)
     sliceXY.addTargetVolume(volume)
@@ -39,17 +37,19 @@ fun createOrthoView(volume: Volume) {
         val planeXY = Box(Vector3f(boundingBox.max.x, boundingBox.max.y, 1f))
         val planeYZ = Box(Vector3f(1f, boundingBox.max.y, boundingBox.max.z))
 
-        planeXZ.position = center
-        planeXY.position = center
-        planeYZ.position = center
+        planeXZ.spatial().position = center
+        planeXY.spatial().position = center
+        planeYZ.spatial().position = center
 
         // make transparent
-        planeXZ.material.blending.setOverlayBlending()
-        planeXZ.material.blending.transparent = true
-        planeXZ.material.blending.opacity = 0f
+        planeXZ.material {
+            blending.setOverlayBlending()
+            blending.transparent = true
+            blending.opacity = 0f
+        }
         //planeXZ.material.wireframe = true
-        planeXY.material = planeXZ.material
-        planeYZ.material = planeXZ.material
+        planeXY.setMaterial(planeXZ.material())
+        planeYZ.setMaterial(planeXZ.material())
 
         planeXZ.addChild(sliceXZ)
         planeXY.addChild(sliceXY)
@@ -59,35 +59,35 @@ fun createOrthoView(volume: Volume) {
         volume.addChild(planeXY)
         volume.addChild(planeYZ)
 
-        val yTop = Node()
-        yTop.position = Vector3f(center.x, boundingBox.max.y, center.z)
+        val yTop = RichNode()
+        yTop.spatial().position = Vector3f(center.x, boundingBox.max.y, center.z)
         volume.addChild(yTop)
 
-        val yBottom = Node()
-        yBottom.position = Vector3f(center.x, boundingBox.min.y, center.z)
+        val yBottom = RichNode()
+        yBottom.spatial().position = Vector3f(center.x, boundingBox.min.y, center.z)
         volume.addChild(yBottom)
 
-        LineRestrictionEffector(planeXZ, { yTop.position }, { yBottom.position })
+        LineRestrictionEffector(planeXZ, { yTop.spatial().position }, { yBottom.spatial().position })
 
-        val zTop = Node()
-        zTop.position = Vector3f(center.x, center.y, boundingBox.max.z)
+        val zTop = RichNode()
+        zTop.spatial().position = Vector3f(center.x, center.y, boundingBox.max.z)
         volume.addChild(/*z*/zTop)
 
-        val zBottom = Node()
-        zBottom.position = Vector3f(center.x, center.y, boundingBox.min.z)
+        val zBottom = RichNode()
+        zBottom.spatial().position = Vector3f(center.x, center.y, boundingBox.min.z)
         volume.addChild(zBottom)
 
-        LineRestrictionEffector(planeXY, { zTop.position }, { zBottom.position })
+        LineRestrictionEffector(planeXY, { zTop.spatial().position }, { zBottom.spatial().position })
 
-        val xTop = Node()
-        xTop.position = Vector3f(boundingBox.max.x, center.y, center.z)
+        val xTop = RichNode()
+        xTop.spatial().position = Vector3f(boundingBox.max.x, center.y, center.z)
         volume.addChild(xTop)
 
-        val xBottom = Node()
-        xBottom.position = Vector3f(boundingBox.min.x, center.y, center.z)
+        val xBottom = RichNode()
+        xBottom.spatial().position = Vector3f(boundingBox.min.x, center.y, center.z)
         volume.addChild(xBottom)
 
-        LineRestrictionEffector(planeYZ, { xTop.position }, { xBottom.position })
+        LineRestrictionEffector(planeYZ, { xTop.spatial().position }, { xBottom.spatial().position })
 
     }
 }

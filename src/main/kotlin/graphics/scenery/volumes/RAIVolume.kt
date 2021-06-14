@@ -22,7 +22,7 @@ class RAIVolume(val ds: VolumeDataSource.RAISource<*>, options: VolumeViewerOpti
         boundingBox = generateBoundingBox()
     }
 
-    override fun generateBoundingBox(): OrientedBoundingBox? {
+    override fun generateBoundingBox(): OrientedBoundingBox {
         val source = ds.sources.firstOrNull()
 
         val sizes = if(source != null) {
@@ -58,26 +58,30 @@ class RAIVolume(val ds: VolumeDataSource.RAISource<*>, options: VolumeViewerOpti
         )
     }
 
-    override fun composeModel() {
-        @Suppress("SENSELESS_COMPARISON")
-        if(position != null && rotation != null && scale != null) {
-            val source = ds.sources.firstOrNull()
+    override fun createSpatial(): VolumeSpatial {
+        return object: VolumeSpatial(this) {
+            override fun composeModel() {
+                @Suppress("SENSELESS_COMPARISON")
+                if (position != null && rotation != null && scale != null) {
+                    val source = ds.sources.firstOrNull()
 
-            val shift = if(source != null) {
-                val s = source.spimSource.getSource(0, 0)
-                val min = Vector3f(s.min(0).toFloat(), s.min(1).toFloat(), s.min(2).toFloat())
-                val max = Vector3f(s.max(0).toFloat(), s.max(1).toFloat(), s.max(2).toFloat())
-                (max - min) * (-0.5f)
-            } else {
-                Vector3f(0.0f, 0.0f, 0.0f)
-            }
+                    val shift = if (source != null) {
+                        val s = source.spimSource.getSource(0, 0)
+                        val min = Vector3f(s.min(0).toFloat(), s.min(1).toFloat(), s.min(2).toFloat())
+                        val max = Vector3f(s.max(0).toFloat(), s.max(1).toFloat(), s.max(2).toFloat())
+                        (max - min) * (-0.5f)
+                    } else {
+                        Vector3f(0.0f, 0.0f, 0.0f)
+                    }
 
-            model.translation(position)
-            model.mul(Matrix4f().set(this.rotation))
-            model.scale(scale)
-            model.scale(localScale())
-            if(origin == Origin.Center) {
-                model.translate(shift)
+                    model.translation(position)
+                    model.mul(Matrix4f().set(this.rotation))
+                    model.scale(scale)
+                    model.scale(localScale())
+                    if (origin == Origin.Center) {
+                        model.translate(shift)
+                    }
+                }
             }
         }
     }

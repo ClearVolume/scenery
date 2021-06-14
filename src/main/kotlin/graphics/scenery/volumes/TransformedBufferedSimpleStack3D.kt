@@ -22,7 +22,7 @@ class TransformedBufferedSimpleStack3D<T>(val stack: SimpleStack3D<T>, backingBu
     override fun getSourceTransform(): AffineTransform3D {
         val w = AffineTransform3D()
         val arr = FloatArray(16)
-        Matrix4f(node.world).transpose().get(arr)
+        Matrix4f(node.spatialOrNull()?.world).transpose().get(arr)
 
         w.set(*arr.map { it.toDouble() }.toDoubleArray())
         return w.concatenate(actualSourceTransform)

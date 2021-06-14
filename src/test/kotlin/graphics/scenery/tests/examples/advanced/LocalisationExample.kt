@@ -6,6 +6,7 @@ import graphics.scenery.backends.Renderer
 import graphics.scenery.controls.TrackedStereoGlasses
 import graphics.scenery.numerics.Random
 import graphics.scenery.primitives.PointCloud
+import graphics.scenery.attribute.material.Material
 import org.scijava.Context
 import org.scijava.ui.UIService
 import org.scijava.widget.FileWidget
@@ -34,17 +35,21 @@ class LocalisationExample : SceneryBase("Localisation Microscopy Rendering examp
 
         val cam: Camera = DetachedHeadCamera(hmd)
         with(cam) {
-            position = Vector3f(0.0f, 0.5f, 5.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.5f, 5.0f)
+            }
             perspectiveCamera(50.0f, windowWidth, windowHeight)
 
             scene.addChild(this)
         }
 
         val shell = Box(Vector3f(20.0f, 20.0f, 20.0f), insideNormals = true)
-        shell.material.cullingMode = Material.CullingMode.Front
-        shell.material.diffuse = Vector3f(0.9f, 0.9f, 0.9f)
-        shell.material.specular = Vector3f(0.0f)
-        shell.material.ambient = Vector3f(0.0f)
+        shell.material {
+            cullingMode = Material.CullingMode.Front
+            diffuse = Vector3f(0.9f, 0.9f, 0.9f)
+            specular = Vector3f(0.0f)
+            ambient = Vector3f(0.0f)
+        }
         scene.addChild(shell)
 
         if(System.getProperty("datasets") != null) {
@@ -61,8 +66,12 @@ class LocalisationExample : SceneryBase("Localisation Microscopy Rendering examp
         files.mapIndexed { i, file ->
             val dataset = PointCloud()
             dataset.readFromPALM(file)
-            dataset.material.diffuse = channelColors.getOrElse(i, { Random.random3DVectorFromRange(0.1f, 0.9f) })
-            dataset.fitInto(5.0f)
+            dataset.material {
+                diffuse = channelColors.getOrElse(i, { Random.random3DVectorFromRange(0.1f, 0.9f) })
+            }
+            dataset.spatial {
+                fitInto(5.0f)
+            }
             dataset
         }.forEach {
             scene.addChild(it)

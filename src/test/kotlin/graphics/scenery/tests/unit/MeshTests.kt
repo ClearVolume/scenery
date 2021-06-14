@@ -24,10 +24,12 @@ class MeshTests {
         val erythrocyte = Mesh()
         erythrocyte.readFrom(Mesh::class.java.getResource("models/erythrocyte.obj").file)
 
-        assertEquals(18000, erythrocyte.vertices.capacity())
-        assertEquals(18000, erythrocyte.normals.capacity())
-        assertEquals(3000, erythrocyte.indices.capacity())
-        assertEquals(12000, erythrocyte.texcoords.capacity())
+        erythrocyte.geometry {
+            assertEquals(18000, vertices.capacity())
+            assertEquals(18000, normals.capacity())
+            assertEquals(3000, indices.capacity())
+            assertEquals(12000, texcoords.capacity())
+        }
 
         val erythrocyteBoundingBox = erythrocyte.boundingBox
         assertNotNull(erythrocyteBoundingBox)
@@ -44,10 +46,12 @@ class MeshTests {
         val leukocyte = Mesh()
         leukocyte.readFrom(Mesh::class.java.getResource("models/leukocyte.obj").file)
 
-        assertEquals(144000, leukocyte.vertices.capacity())
-        assertEquals(144000, leukocyte.normals.capacity())
-        assertEquals(24000, leukocyte.indices.capacity())
-        assertEquals(96000, leukocyte.texcoords.capacity())
+        leukocyte.geometry {
+            assertEquals(144000, vertices.capacity())
+            assertEquals(144000, normals.capacity())
+            assertEquals(24000, indices.capacity())
+            assertEquals(96000, texcoords.capacity())
+        }
 
         val leukocyteBoundingBox = leukocyte.boundingBox
         assertNotNull(leukocyteBoundingBox)
@@ -71,9 +75,11 @@ class MeshTests {
         val erythrocyte = Mesh()
         erythrocyte.readFrom(Mesh::class.java.getResource("models/erythrocyte.stl").file)
 
-        assertEquals(9000, erythrocyte.vertices.capacity())
-        assertEquals(9000, erythrocyte.normals.capacity())
-        /*TODO:indices and texcoords?*/
+        erythrocyte.geometry {
+            assertEquals(9000, vertices.capacity())
+            assertEquals(9000, normals.capacity())
+            /*TODO:indices and texcoords?*/
+        }
 
         val boundingBox = erythrocyte.boundingBox
         assertNotNull(boundingBox)
@@ -97,9 +103,11 @@ class MeshTests {
         val erythrocyte = Mesh()
         erythrocyte.readFrom(Mesh::class.java.getResource("models/erythrocyte_ascii.stl").file)
 
-        assertEquals(9000, erythrocyte.vertices.capacity())
-        assertEquals(9000, erythrocyte.normals.capacity())
-        /*TODO:indices and texcoords?*/
+        erythrocyte.geometry {
+            assertEquals(9000, vertices.capacity())
+            assertEquals(9000, normals.capacity())
+            /*TODO:indices and texcoords?*/
+        }
 
         val boundingBox = erythrocyte.boundingBox
         assertNotNull(boundingBox)

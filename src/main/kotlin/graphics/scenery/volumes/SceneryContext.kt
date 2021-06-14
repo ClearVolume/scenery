@@ -352,8 +352,9 @@ open class SceneryContext(val node: VolumeManager, val useCompute: Boolean = fal
             else -> throw UnsupportedOperationException("Unknown wrapping mode: ${texture.texWrap()}")
         }
 
+        val material = node.material()
         if (texture is TextureCache) {
-            if(currentlyBoundCache != null && node.material.textures["volumeCache"] == currentlyBoundCache && dimensionsMatch(texture, node.material.textures["volumeCache"])) {
+            if(currentlyBoundCache != null && material.textures["volumeCache"] == currentlyBoundCache && dimensionsMatch(texture, material.textures["volumeCache"])) {
                 return 0
             }
 
@@ -370,7 +371,7 @@ open class SceneryContext(val node: VolumeManager, val useCompute: Boolean = fal
                 minFilter = Texture.FilteringMode.Linear,
                 maxFilter = Texture.FilteringMode.Linear)
 
-            node.material.textures["volumeCache"] = gt
+            material.textures["volumeCache"] = gt
 
             currentlyBoundCache = gt
         } else {
@@ -383,9 +384,9 @@ open class SceneryContext(val node: VolumeManager, val useCompute: Boolean = fal
                     && currentlyBoundLuts[lut] != null
                     && node.material.textures[lut] == currentlyBoundLuts[lut])) {
                  */
-                if (!(node.material.textures[name] != null
+                if (!(material.textures[name] != null
                     && currentlyBoundTextures[name] != null
-                    && node.material.textures[name] == currentlyBoundTextures[name])) {
+                    && material.textures[name] == currentlyBoundTextures[name])) {
                     val contents = when(texture) {
                         is LookupTextureARGB -> null
                         is VolumeManager.SimpleTexture2D -> texture.data
@@ -409,7 +410,7 @@ open class SceneryContext(val node: VolumeManager, val useCompute: Boolean = fal
                         minFilter = filterLinear,
                         maxFilter = filterLinear)
 
-                    node.material.textures[name] = gt
+                    material.textures[name] = gt
 
                     currentlyBoundTextures[name] = gt
                 }
@@ -541,7 +542,8 @@ open class SceneryContext(val node: VolumeManager, val useCompute: Boolean = fal
             val name = texture?.uniformName
 
             if(texture != null && name != null) {
-                val gt = node.material.textures[name] as? UpdatableTexture ?: throw IllegalStateException("Texture for $name is null or not updateable")
+                val material = node.material()
+                val gt = material.textures[name] as? UpdatableTexture ?: throw IllegalStateException("Texture for $name is null or not updateable")
 
                 logger.debug("Running ${updates.size} texture updates for $texture")
                 updates.forEach { update ->
@@ -559,7 +561,7 @@ open class SceneryContext(val node: VolumeManager, val useCompute: Boolean = fal
                                 gt.normalized = false
                             }
 
-                            node.material.textures[name] = gt
+                            material.textures[name] = gt
                         }
 
                         val textureUpdate = TextureUpdate(

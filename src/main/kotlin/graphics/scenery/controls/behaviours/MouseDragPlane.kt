@@ -87,11 +87,13 @@ open class MouseDragPlane(
         cam?.let {
             if (targetedNode == null || !targetedNode.lock.tryLock()) return
 
-            it.right.mul((x - lastX) * fpsSpeedSlow() * mouseSpeed(), dragPosUpdater)
-            targetedNode.position.add(dragPosUpdater)
-            it.up.mul((lastY - y) * fpsSpeedSlow() * mouseSpeed(), dragPosUpdater)
-            targetedNode.position.add(dragPosUpdater)
-            targetedNode.needsUpdate = true
+            targetedNode.ifSpatial {
+                it.right.mul((x - lastX) * fpsSpeedSlow() * mouseSpeed(), dragPosUpdater)
+                position.add(dragPosUpdater)
+                it.up.mul((lastY - y) * fpsSpeedSlow() * mouseSpeed(), dragPosUpdater)
+                position.add(dragPosUpdater)
+                needsUpdate = true
+            }
 
             targetedNode.lock.unlock()
 
@@ -114,8 +116,10 @@ open class MouseDragPlane(
                 wheelRotation.toFloat() * fpsSpeedSlow() * mouseSpeed(),
                 scrollPosUpdater
             )
-            targetedNode.position.add(scrollPosUpdater)
-            targetedNode.needsUpdate = true
+            targetedNode.ifSpatial {
+                position.add(scrollPosUpdater)
+                needsUpdate = true
+            }
 
             targetedNode.lock.unlock()
         }

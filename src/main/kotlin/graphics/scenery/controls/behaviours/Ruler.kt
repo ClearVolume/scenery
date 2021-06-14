@@ -58,8 +58,10 @@ class Ruler(private val name: String, private val camera: () -> Camera?, private
         board.backgroundColor = Vector4f(100f, 100f, 100f, 1.0f)
         val boardPosition = Vector3f()
         origin.add(endPosition, boardPosition).mul(0.5f)
-        board.position = boardPosition.mul(0.5f)
-        board.scale = Vector3f(0.5f, 0.5f, 0.5f)
+        board.spatial {
+            position = boardPosition.mul(0.5f)
+            scale = Vector3f(0.5f, 0.5f, 0.5f)
+        }
         scene.addChild(board)
     }
 
@@ -69,8 +71,8 @@ class Ruler(private val name: String, private val camera: () -> Camera?, private
         val height = cam.height
         val posX = (p0 - width / 2.0f) / (width / 2.0f)
         val posY = -1.0f * (p1 - height / 2.0f) / (height / 2.0f)
-        val mousePosition = cam.viewportToView(Vector2f(posX, posY))
-        val position4D = cam.viewToWorld(mousePosition)
+        val mousePosition = cam.spatial().viewportToView(Vector2f(posX, posY))
+        val position4D = cam.spatial().viewToWorld(mousePosition)
         return Vector3f(position4D.x(), position4D.y(), position4D.z())
     }
 }

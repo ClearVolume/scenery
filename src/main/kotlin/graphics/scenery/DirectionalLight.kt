@@ -1,6 +1,7 @@
 package graphics.scenery
 
 import graphics.scenery.geometry.GeometryType
+import graphics.scenery.attribute.material.Material
 import org.joml.Vector3f
 
 /**
@@ -38,43 +39,49 @@ class DirectionalLight(var direction: Vector3f = Vector3f(0.0f, 1.0f, 0.0f)) : L
     @ShaderProperty var debugMode = 0
 
     init {
-        // fake geometry
-        this.vertices = BufferUtils.allocateFloatAndPut(
-            floatArrayOf(
-                -1.0f, -1.0f, 0.0f,
-                1.0f, -1.0f, 0.0f,
-                1.0f, 1.0f, 0.0f,
-                -1.0f, 1.0f, 0.0f))
+        geometry {
 
-        this.normals = BufferUtils.allocateFloatAndPut(
-            floatArrayOf(
-                1.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f))
 
-        this.texcoords = BufferUtils.allocateFloatAndPut(
-            floatArrayOf(
-                0.0f, 0.0f,
-                1.0f, 0.0f,
-                1.0f, 1.0f,
-                0.0f, 1.0f))
+            // fake geometry
+            this.vertices = BufferUtils.allocateFloatAndPut(
+                floatArrayOf(
+                    -1.0f, -1.0f, 0.0f,
+                    1.0f, -1.0f, 0.0f,
+                    1.0f, 1.0f, 0.0f,
+                    -1.0f, 1.0f, 0.0f))
 
-        this.indices = BufferUtils.allocateIntAndPut(
-            intArrayOf(0, 1, 2, 0, 2, 3))
+            this.normals = BufferUtils.allocateFloatAndPut(
+                floatArrayOf(
+                    1.0f, 0.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f,
+                    0.0f, 0.0f, 1.0f,
+                    0.0f, 0.0f, 1.0f))
 
-        this.geometryType = GeometryType.TRIANGLES
-        this.vertexSize = 3
-        this.texcoordSize = 2
+            this.texcoords = BufferUtils.allocateFloatAndPut(
+                floatArrayOf(
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    1.0f, 1.0f,
+                    0.0f, 1.0f))
 
-        material.blending.transparent = true
-        material.blending.colorBlending = Blending.BlendOp.add
-        material.blending.sourceColorBlendFactor = Blending.BlendFactor.One
-        material.blending.destinationColorBlendFactor = Blending.BlendFactor.One
-        material.blending.sourceAlphaBlendFactor = Blending.BlendFactor.One
-        material.blending.destinationAlphaBlendFactor = Blending.BlendFactor.One
-        material.blending.alphaBlending = Blending.BlendOp.add
-        material.cullingMode = Material.CullingMode.Front
-        material.depthTest = Material.DepthTest.Greater
+            this.indices = BufferUtils.allocateIntAndPut(
+                intArrayOf(0, 1, 2, 0, 2, 3))
+
+            this.geometryType = GeometryType.TRIANGLES
+            this.vertexSize = 3
+            this.texcoordSize = 2
+        }
+
+        material {
+            blending.transparent = true
+            blending.colorBlending = Blending.BlendOp.add
+            blending.sourceColorBlendFactor = Blending.BlendFactor.One
+            blending.destinationColorBlendFactor = Blending.BlendFactor.One
+            blending.sourceAlphaBlendFactor = Blending.BlendFactor.One
+            blending.destinationAlphaBlendFactor = Blending.BlendFactor.One
+            blending.alphaBlending = Blending.BlendOp.add
+            cullingMode = Material.CullingMode.Front
+            depthTest = Material.DepthTest.Greater
+        }
     }
 }

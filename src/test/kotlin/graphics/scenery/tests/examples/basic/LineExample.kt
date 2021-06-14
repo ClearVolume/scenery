@@ -5,6 +5,7 @@ import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.numerics.Random
 import graphics.scenery.primitives.Line
+import graphics.scenery.attribute.material.Material
 import kotlin.concurrent.thread
 
 /**
@@ -23,8 +24,10 @@ class LineExample : SceneryBase("LineExample") {
         renderer = hub.add(Renderer.createRenderer(hub, applicationName, scene, windowWidth, windowHeight))
 
         val hull = Box(Vector3f(50.0f, 50.0f, 50.0f), insideNormals = true)
-        hull.material.diffuse = Vector3f(0.2f, 0.2f, 0.2f)
-        hull.material.cullingMode = Material.CullingMode.Front
+        hull.material {
+            diffuse = Vector3f(0.2f, 0.2f, 0.2f)
+            cullingMode = Material.CullingMode.Front
+        }
         scene.addChild(hull)
 
         val line = Line(transparent = false)
@@ -32,11 +35,15 @@ class LineExample : SceneryBase("LineExample") {
         line.addPoint(Vector3f(0.0f, 0.0f, 0.0f))
         line.addPoint(Vector3f(5.0f, 5.0f, 5.0f))
 
-        line.material.ambient = Vector3f(1.0f, 0.0f, 0.0f)
-        line.material.diffuse = Vector3f(1.0f, 1.0f, 1.0f)
-        line.material.specular = Vector3f(1.0f, 1.0f, 1.0f)
+        line.material {
+            ambient = Vector3f(1.0f, 0.0f, 0.0f)
+            diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+            specular = Vector3f(1.0f, 1.0f, 1.0f)
+        }
+        line.spatial {
+            position = Vector3f(0.0f, 0.0f, 0.0f)
+        }
 
-        line.position = Vector3f(0.0f, 0.0f, 0.0f)
         line.edgeWidth = 0.02f
 
         scene.addChild(line)
@@ -51,7 +58,9 @@ class LineExample : SceneryBase("LineExample") {
         }
 
         val cam: Camera = DetachedHeadCamera()
-        cam.position = Vector3f(0.0f, 0.0f, 15.0f)
+        cam.spatial {
+            position = Vector3f(0.0f, 0.0f, 15.0f)
+        }
         cam.perspectiveCamera(50.0f, windowWidth, windowHeight)
         cam.target = Vector3f(0.0f, 0.0f, 0.0f)
 
@@ -73,10 +82,12 @@ class LineExample : SceneryBase("LineExample") {
             while(true) {
                 val t = runtime/100
                 lights.forEachIndexed { i, pointLight ->
-                    pointLight.position = Vector3f(
-                        3.0f*Math.sin(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat(),
-                        0.0f,
-                        -3.0f*Math.cos(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat())
+                    pointLight.spatial {
+                        position = Vector3f(
+                            3.0f*Math.sin(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat(),
+                            0.0f,
+                            -3.0f*Math.cos(2*i*Math.PI/3.0f+t*Math.PI/50).toFloat())
+                    }
                 }
 
                 Thread.sleep(20)

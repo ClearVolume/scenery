@@ -4,6 +4,7 @@ import bdv.util.AxisOrder
 import graphics.scenery.*
 import org.joml.Vector3f
 import graphics.scenery.backends.Renderer
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.volumes.TransferFunction
 import graphics.scenery.volumes.Volume
 import ij.IJ
@@ -28,8 +29,9 @@ class RAIExample: SceneryBase("RAI Rendering example", 1280, 720) {
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
             perspectiveCamera(50.0f, windowWidth, windowHeight)
-
-            position = Vector3f(0.0f, 0.0f, 5.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 5.0f)
+            }
             scene.addChild(this)
         }
 
@@ -41,17 +43,19 @@ class RAIExample: SceneryBase("RAI Rendering example", 1280, 720) {
         scene.addChild(volume)
 
         val shell = Box(Vector3f(10.0f, 10.0f, 10.0f), insideNormals = true)
-        shell.material.cullingMode = Material.CullingMode.None
-        shell.material.diffuse = Vector3f(0.2f, 0.2f, 0.2f)
-        shell.material.specular = Vector3f(0.0f)
-        shell.material.ambient = Vector3f(0.0f)
+        shell.material {
+            cullingMode = Material.CullingMode.None
+            diffuse = Vector3f(0.2f, 0.2f, 0.2f)
+            specular = Vector3f(0.0f)
+            ambient = Vector3f(0.0f)
+        }
         scene.addChild(shell)
 
         Light.createLightTetrahedron<PointLight>(spread = 4.0f, radius = 15.0f, intensity = 0.5f)
             .forEach { scene.addChild(it) }
 
         val origin = Box(Vector3f(0.1f, 0.1f, 0.1f))
-        origin.material.diffuse = Vector3f(0.8f, 0.0f, 0.0f)
+        origin.material().diffuse = Vector3f(0.8f, 0.0f, 0.0f)
         scene.addChild(origin)
     }
 

@@ -40,7 +40,7 @@ class GamepadCameraControlTests {
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 0.0f, 5.0f)
+            spatial().position = Vector3f(0.0f, 0.0f, 5.0f)
             perspectiveCamera(50.0f, 512, 512)
             scene.addChild(this)
         }
@@ -61,7 +61,9 @@ class GamepadCameraControlTests {
             else {
                 gamepadCameraControl.axisEvent(Component.Identifier.Axis.Y, rotationVal)
             }
-            printWriter.println("[$i, $axis, $rotationVal, ${cam.rotation.x}, ${cam.rotation.y}, ${cam.rotation.z}, ${cam.rotation.w}]")
+            cam.spatial {
+                printWriter.println("[$i, $axis, $rotationVal, ${rotation.x}, ${rotation.y}, ${rotation.z}, ${rotation.w}]")
+            }
         }
         printWriter.close()
     }
@@ -88,7 +90,9 @@ class GamepadCameraControlTests {
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 0.0f, 5.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 5.0f)
+            }
             perspectiveCamera(50.0f, 512, 512)
             scene.addChild(this)
         }
@@ -103,10 +107,10 @@ class GamepadCameraControlTests {
             else {
                 gamepadCameraControl.axisEvent(Component.Identifier.Axis.Y, numbers[2])
             }
-            Assert.assertEquals("Computed camera rotation is incorrect", numbers[3], cam.rotation.x, 0.00001f)
-            Assert.assertEquals("Computed camera rotation is incorrect", numbers[4], cam.rotation.y, 0.00001f)
-            Assert.assertEquals("Computed camera rotation is incorrect", numbers[5], cam.rotation.z, 0.00001f)
-            Assert.assertEquals("Computed camera rotation is incorrect", numbers[6], cam.rotation.w, 0.00001f)
+            Assert.assertEquals("Computed camera rotation is incorrect", numbers[3], cam.spatial().rotation.x, 0.00001f)
+            Assert.assertEquals("Computed camera rotation is incorrect", numbers[4], cam.spatial().rotation.y, 0.00001f)
+            Assert.assertEquals("Computed camera rotation is incorrect", numbers[5], cam.spatial().rotation.z, 0.00001f)
+            Assert.assertEquals("Computed camera rotation is incorrect", numbers[6], cam.spatial().rotation.w, 0.00001f)
         }
     }
 }

@@ -462,11 +462,11 @@ class PupilEyeTracker(val calibrationType: CalibrationType, val host: String = "
                 val position = Vector3f(normalizedScreenPos.world)
 
                 val calibrationPosition = if(calibrationType == CalibrationType.ScreenSpace) {
-                    calibrationTarget?.position = position + cam.forward * 0.15f
+                    calibrationTarget?.spatialOrNull()?.position = position + cam.forward * 0.15f
                     val l = normalizedScreenPos.local
                     floatArrayOf(l.x, l.y, l.z)
                 } else {
-                    calibrationTarget?.position = position
+                    calibrationTarget?.spatialOrNull()?.position = position
                     val p = Vector3f(normalizedScreenPos.local) * pupilToSceneryRatio
                     p.x = p.get(0) * 1.0f
                     p.y = p.get(1) * -1.0f * cam.aspectRatio()
@@ -474,10 +474,12 @@ class PupilEyeTracker(val calibrationType: CalibrationType, val host: String = "
                     floatArrayOf(p.x, p.y, p.z)
                 }
 
-                if(normalizedScreenPos.local.x() == 0.5f && normalizedScreenPos.local.y() == 0.5f) {
-                    calibrationTarget?.material?.diffuse = Vector3f(1.0f, 1.0f, 0.0f)
-                } else {
-                    calibrationTarget?.material?.diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+                calibrationTarget?.ifMaterial {
+                    if(normalizedScreenPos.local.x() == 0.5f && normalizedScreenPos.local.y() == 0.5f) {
+                        diffuse = Vector3f(1.0f, 1.0f, 0.0f)
+                    } else {
+                        diffuse = Vector3f(1.0f, 1.0f, 1.0f)
+                    }
                 }
 
                 (0 until samplesPerPoint).forEach {

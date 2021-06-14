@@ -140,7 +140,7 @@ class Colormap(val buffer: ByteBuffer, val width: Int, val height: Int) {
             } catch(e: IOException) {
                 logger.debug("LUT $name not found as ImageJ colormap, trying stream")
                 logger.info("Using colormap $name from stream")
-                val resource = this::class.java.getResourceAsStream("colormap-$name.png")
+                val resource = Colormap::class.java.getResourceAsStream("colormap-$name.png")
                     ?: throw FileNotFoundException("Could not find color map for name $name (colormap-$name.png)")
 
                 return fromStream(resource, "png")

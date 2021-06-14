@@ -1,18 +1,17 @@
-package graphics.scenery
+package graphics.scenery.attribute.material
 
-import org.joml.Vector3f
-import graphics.scenery.Material.CullingMode.*
+import graphics.scenery.Blending
+import graphics.scenery.attribute.material.Material.CullingMode.*
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.TimestampedConcurrentHashMap
-import java.io.Serializable
-import java.util.concurrent.ConcurrentHashMap
+import org.joml.Vector3f
 
 /**
- * Material class, storing material colors, textures, opacity properties, etc.
+ * Material interface, storing material colors, textures, opacity properties, etc.
  *
  * @author Ulrik Günther <hello@ulrik.is>
  */
-open class Material : Serializable {
+interface Material {
 
     /**
      * Culling Mode enum, to determine which faces are culling when assuming CCW order
@@ -27,44 +26,34 @@ open class Material : Serializable {
     enum class DepthTest { Less, Greater, LessEqual, GreaterEqual, Always, Never, Equal }
 
     /** Name of the material. */
-    var name: String = "Material"
+    var name: String
     /** Diffuse color of the material. */
-    var diffuse: Vector3f = Vector3f(0.9f, 0.5f, 0.5f)
+    var diffuse: Vector3f
     /** Specular color of the material. */
-    var specular: Vector3f = Vector3f(0.5f, 0.5f, 0.5f)
+    var specular: Vector3f
     /** Ambient color of the material. */
-    var ambient: Vector3f = Vector3f(0.5f, 0.5f, 0.5f)
+    var ambient: Vector3f
     /** Specular exponent */
-    var roughness: Float = 1.0f
+    var roughness: Float
     /** Metallicity, 0.0 is non-metal, 1.0 is full metal */
-    var metallic: Float = 0.0f
+    var metallic: Float
 
     /** Blending settings for this material. See [Blending]. */
-    var blending: Blending = Blending()
+    var blending: Blending
 
     /** Hash map storing the type and origin of the material's textures. Key is the
      * type, e.g. ("diffuse", "normal", "displacement"...), value can be a file path or
      * via "fromBuffer:[transferTextureName], a named [Texture] in [transferTextures]. */
-    @Volatile var textures: TimestampedConcurrentHashMap<String, Texture> = TimestampedConcurrentHashMap()
+    var textures: TimestampedConcurrentHashMap<String, Texture>
 
     /** Culling mode of the material. @see[CullingMode] */
-    var cullingMode: CullingMode = CullingMode.Back
+    var cullingMode: CullingMode
 
     /** depth testing mode for this material */
-    var depthTest: DepthTest = DepthTest.LessEqual
+    var depthTest: DepthTest
 
     /** Flag to make the object wireframe */
-    var wireframe: Boolean = false
-
-    /** Companion object for Material, emulating static methods */
-    companion object Factory {
-        /**
-         * Factory method returning the default material
-         *
-         * @return Material with default properties
-         */
-        @JvmStatic fun DefaultMaterial(): Material = Material()
-    }
+    var wireframe: Boolean
 
     /**
      * Returns a hash of the material, with properties relevant for

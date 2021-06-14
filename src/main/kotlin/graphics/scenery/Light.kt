@@ -45,7 +45,9 @@ abstract class Light(name: String = "Light") : Mesh(name) {
 
             return tetrahedron.map { position ->
                 val light = T::class.createInstance()
-                light.position = position + center
+                light.spatial {
+                    this.position = position + center
+                }
                 light.emissionColor = color
                 light.intensity = intensity
                 if(light is PointLight) {

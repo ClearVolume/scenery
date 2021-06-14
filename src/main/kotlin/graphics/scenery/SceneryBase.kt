@@ -261,7 +261,7 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
             scene.discover(scene, { n ->
                     n.visible && n.state == State.Ready
             }, useDiscoveryBarriers = true)
-                .map { it.updateWorld(recursive = true, force = false); it }
+                .map { it.spatialOrNull()?.updateWorld(recursive = true, force = false); it }
         }
 
         while (!shouldClose || gracePeriod > 0) {
@@ -281,7 +281,7 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
                 scene.discover(scene, { n ->
                         n.visible && n.state == State.Ready
                 }, useDiscoveryBarriers = true)
-                    .map { it.updateWorld(recursive = true, force = false); it }
+                    .map { it.spatialOrNull()?.updateWorld(recursive = true, force = false); it }
             }
             profiler?.end()
 

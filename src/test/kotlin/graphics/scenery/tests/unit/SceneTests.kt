@@ -3,6 +3,7 @@ package graphics.scenery.tests.unit
 import org.joml.Vector3f
 import graphics.scenery.Box
 import graphics.scenery.Node
+import graphics.scenery.RichNode
 import graphics.scenery.Scene
 import graphics.scenery.numerics.Random
 import graphics.scenery.utils.LazyLogger
@@ -28,14 +29,14 @@ class SceneTests {
         (0 until count).map {
             Box()
         }.forEachIndexed { i, n ->
-            n.position = Vector3f(
+            n.spatial().position = Vector3f(
                 Random.randomFromRange(-0.4f, 0.4f),
                 Random.randomFromRange(-0.4f, 0.4f),
                 -1.0f + i * (-1.5f))
 
             scene.addChild(n)
         }
-        scene.updateWorld(true)
+        scene.spatial().updateWorld(true)
 
         val results = scene.raycast(
             position = Vector3f(0.0f),
@@ -61,7 +62,7 @@ class SceneTests {
         }
         val nodeCount = Random.randomFromRange(2.0f, 10.0f).roundToInt()
         val nodes = (0 until nodeCount).map {
-            Node()
+            RichNode()
         }
 
         nodes.forEach { scene.addChild(it) }

@@ -1,5 +1,6 @@
 package graphics.scenery
 
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.utils.extensions.xyz
 import org.joml.Vector3f
 import org.joml.Vector4f
@@ -34,12 +35,15 @@ class PointLight(radius: Float = 5.0f) : Light("PointLight") {
                 logger.info("Resetting light radius")
                 field = value
                 proxySphere = Sphere(value * 1.1f, 10)
-                this.vertices = proxySphere.vertices
-                this.normals = proxySphere.normals
-                this.texcoords = proxySphere.texcoords
-                this.boundingBox = proxySphere.boundingBox
+                geometry {
+                    val proxyGeom = proxySphere.geometry()
+                    this.vertices = proxyGeom.vertices
+                    this.normals = proxyGeom.normals
+                    this.texcoords = proxyGeom.texcoords
+                    this@PointLight.boundingBox = proxySphere.boundingBox
+                    this.dirty = true
+                }
 
-                this.dirty = true
             }
         }
 
@@ -47,34 +51,41 @@ class PointLight(radius: Float = 5.0f) : Light("PointLight") {
     override var name = "PointLight"
 
     @Suppress("unused") // will be serialised into ShaderProperty buffer
-    @ShaderProperty val worldPosition
-        get(): Vector3f =
-            if(this.parent != null && this.parent !is Scene) {
-                this.world.transform(Vector4f(position.x(), position.y(), position.z(), 1.0f)).xyz()
+    @ShaderProperty val worldPosition: Vector3f
+        get(): Vector3f {
+            val spatial = spatial()
+            return if(this.parent != null && this.parent !is Scene) {
+                spatial.world.transform(Vector4f(spatial.position.x(), spatial.position.y(), spatial.position.z(), 1.0f)).xyz()
             } else {
-                Vector3f(position.x(), position.y(), position.z())
+                Vector3f(spatial.position.x(), spatial.position.y(), spatial.position.z())
             }
+        }
 
     @Suppress("unused") // will be serialised into ShaderProperty buffer
     @ShaderProperty var debugMode = 0
 
     init {
-        this.vertices = proxySphere.vertices
-        this.normals = proxySphere.normals
-        this.texcoords = proxySphere.texcoords
-        this.geometryType = proxySphere.geometryType
-        this.vertexSize = proxySphere.vertexSize
-        this.texcoordSize = proxySphere.texcoordSize
+        geometry {
+            val proxyGeom = proxySphere.geometry()
+            this.vertices = proxyGeom.vertices
+            this.normals = proxyGeom.normals
+            this.texcoords = proxyGeom.texcoords
+            this.geometryType = proxyGeom.geometryType
+            this.vertexSize = proxyGeom.vertexSize
+            this.texcoordSize = proxyGeom.texcoordSize
+        }
         this.boundingBox = proxySphere.boundingBox
 
-        material.blending.transparent = true
-        material.blending.colorBlending = Blending.BlendOp.add
-        material.blending.sourceColorBlendFactor = Blending.BlendFactor.One
-        material.blending.destinationColorBlendFactor = Blending.BlendFactor.One
-        material.blending.sourceAlphaBlendFactor = Blending.BlendFactor.One
-        material.blending.destinationAlphaBlendFactor = Blending.BlendFactor.One
-        material.blending.alphaBlending = Blending.BlendOp.add
-        material.cullingMode = Material.CullingMode.Front
-        material.depthTest = Material.DepthTest.Greater
+        material {
+            blending.transparent = true
+            blending.colorBlending = Blending.BlendOp.add
+            blending.sourceColorBlendFactor = Blending.BlendFactor.One
+            blending.destinationColorBlendFactor = Blending.BlendFactor.One
+            blending.sourceAlphaBlendFactor = Blending.BlendFactor.One
+            blending.destinationAlphaBlendFactor = Blending.BlendFactor.One
+            blending.alphaBlending = Blending.BlendOp.add
+            cullingMode = Material.CullingMode.Front
+            depthTest = Material.DepthTest.Greater
+        }
     }
 }

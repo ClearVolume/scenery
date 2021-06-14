@@ -7,15 +7,14 @@ import graphics.scenery.controls.ScreenConfig
 import graphics.scenery.numerics.Random
 import graphics.scenery.primitives.Plane
 import graphics.scenery.primitives.TextBoard
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.utils.extensions.minus
 import graphics.scenery.utils.extensions.plus
-import graphics.scenery.volumes.Colormap
 import org.joml.Vector4f
 import org.scijava.Context
 import org.scijava.ui.UIService
 import org.scijava.ui.behaviour.ClickBehaviour
 import org.scijava.widget.FileWidget
-import kotlin.math.PI
 
 /**
  * <Description>
@@ -44,11 +43,11 @@ class ScreenConfigVisualizerExample : SceneryBase("Screen Config Visualizer", 12
         lights.forEach { scene.addChild(it) }
 
         val light = PointLight(20.0f)
-        light.position = Vector3f(0.0f, 1.8f, 0.0f)
+        light.spatial().position = Vector3f(0.0f, 1.8f, 0.0f)
         scene.addChild(light)
 
         val origin = Icosphere(0.1f, 2)
-        origin.material.diffuse = Vector3f(1.0f)
+        origin.material().diffuse = Vector3f(1.0f)
         scene.addChild(origin)
 
         val screenconfig = ScreenConfig.loadFromFile(files[0])
@@ -63,31 +62,35 @@ class ScreenConfigVisualizerExample : SceneryBase("Screen Config Visualizer", 12
             val s = Group()
 
             val lowerLeft = Icosphere(0.05f, 2)
-            lowerLeft.material.diffuse = Vector3f(1.0f, 0.0f, 0.0f)
-            lowerLeft.position = screen.lowerLeft
+            lowerLeft.material().diffuse = Vector3f(1.0f, 0.0f, 0.0f)
+            lowerLeft.spatial().position = screen.lowerLeft
             s.addChild(lowerLeft)
 
             val lowerRight = Icosphere(0.05f, 2)
-            lowerRight.material.diffuse = Vector3f(0.0f, 1.0f, 0.0f)
-            lowerRight.position = screen.lowerRight
+            lowerRight.material().diffuse = Vector3f(0.0f, 1.0f, 0.0f)
+            lowerRight.spatial().position = screen.lowerRight
             s.addChild(lowerRight)
 
             val upperLeft = Icosphere(0.05f, 2)
-            upperLeft.material.diffuse = Vector3f(0.0f, 0.0f, 1.0f)
-            upperLeft.position = screen.upperLeft
+            upperLeft.material().diffuse = Vector3f(0.0f, 0.0f, 1.0f)
+            upperLeft.spatial().position = screen.upperLeft
             s.addChild(upperLeft)
 
             val up: Vector3f = screen.lowerLeft + (screen.lowerRight - screen.lowerLeft) + (screen.upperLeft - screen.lowerLeft)
             val p = Plane(screen.lowerLeft, screen.upperLeft, screen.lowerRight, up)
-            p.material.diffuse = color
-            p.material.cullingMode = Material.CullingMode.None
+            p.material {
+                diffuse = color
+                cullingMode = Material.CullingMode.None
+            }
 
             val label = TextBoard()
             label.text = name
             label.backgroundColor = Vector4f(0.0f)
             label.fontColor = Vector4f(1.0f)
-            label.scale = Vector3f(0.5f, 0.5f, 0.5f)
-            label.position = Vector3f(0.0f, 1.5f, 0.0f)
+            label.spatial {
+                scale = Vector3f(0.5f, 0.5f, 0.5f)
+                position = Vector3f(0.0f, 1.5f, 0.0f)
+            }
             label.visible = false
             s.addChild(label)
 
@@ -98,14 +101,18 @@ class ScreenConfigVisualizerExample : SceneryBase("Screen Config Visualizer", 12
         }
 
         val box = Box(Vector3f(scene.getMaximumBoundingBox().getBoundingSphere().radius * 0.5f), insideNormals = true)
-        box.material.cullingMode = Material.CullingMode.None
-        box.material.diffuse = Vector3f(0.3f, 0.3f, 0.3f)
+        box.material {
+            cullingMode = Material.CullingMode.None
+            diffuse = Vector3f(0.3f, 0.3f, 0.3f)
+        }
         scene.addChild(box)
 
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 1.65f, 5.0f)
+            spatial {
+                position = Vector3f(0.0f, 1.65f, 5.0f)
+            }
             perspectiveCamera(50.0f, 512, 512)
 
             scene.addChild(this)

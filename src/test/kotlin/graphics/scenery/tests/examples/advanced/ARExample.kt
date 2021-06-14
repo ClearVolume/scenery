@@ -31,27 +31,37 @@ class ARExample: SceneryBase("AR Volume Rendering example", 1280, 720) {
 
         val cam: Camera = DetachedHeadCamera(hololens)
         with(cam) {
-            position = Vector3f(-0.2f, 0.0f, 1.0f)
+            spatial {
+                position = Vector3f(-0.2f, 0.0f, 1.0f)
+            }
             perspectiveCamera(50.0f, windowWidth, windowHeight)
 
             scene.addChild(this)
         }
 
         val volume = Volume.fromBuffer(emptyList(), 64, 64, 64, UnsignedShortType(), hub)
-        volume.name = "volume"
-        volume.colormap = Colormap.get("plasma")
-        volume.scale = Vector3f(0.02f, 0.02f, 0.02f)
-        scene.addChild(volume)
+        with(volume) {
+            name = "volume"
+            colormap = Colormap.get("plasma")
+            spatial {
+                scale = Vector3f(0.02f, 0.02f, 0.02f)
+            }
+            scene.addChild(this)
+        }
 
         val lights = (0 until 3).map {
             PointLight(radius = 15.0f)
         }
 
         lights.mapIndexed { i, light ->
-            light.position = Vector3f(2.0f * i - 4.0f,  i - 1.0f, 0.0f)
-            light.emissionColor = Vector3f(1.0f, 1.0f, 1.0f)
-            light.intensity = 50.0f
-            scene.addChild(light)
+            with(light) {
+                spatial {
+                    position = Vector3f(2.0f * i - 4.0f,  i - 1.0f, 0.0f)
+                }
+                emissionColor = Vector3f(1.0f, 1.0f, 1.0f)
+                intensity = 50.0f
+                scene.addChild(this)
+            }
         }
 
         thread {

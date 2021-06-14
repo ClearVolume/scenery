@@ -13,45 +13,48 @@ import org.joml.Vector3f
  */
 open class Plane(sizes: Vector3f) : Mesh() {
     init {
-        this.scale = sizes
+        spatial {
+            this.scale = sizes
+        }
         this.name = "plane"
         val side = 2.0f
         val side2 = side / 2.0f
 
-        vertices = BufferUtils.allocateFloatAndPut(
-            floatArrayOf(
-                // Front
-                -side2, -side2, side2,
-                side2, -side2, side2,
-                side2, side2, side2,
-                -side2, side2, side2
+        geometry {
+            vertices = BufferUtils.allocateFloatAndPut(
+                floatArrayOf(
+                    // Front
+                    -side2, -side2, side2,
+                    side2, -side2, side2,
+                    side2, side2, side2,
+                    -side2, side2, side2
+                )
             )
-        )
 
-        normals = BufferUtils.allocateFloatAndPut(
-            floatArrayOf(
-                // Front
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f
+            normals = BufferUtils.allocateFloatAndPut(
+                floatArrayOf(
+                    // Front
+                    0.0f, 0.0f, 1.0f,
+                    0.0f, 0.0f, 1.0f,
+                    0.0f, 0.0f, 1.0f,
+                    0.0f, 0.0f, 1.0f
+                )
             )
-        )
+            indices = BufferUtils.allocateIntAndPut(
+                intArrayOf(
+                    0, 1, 2, 0, 2, 3
+                )
+            )
 
-        indices = BufferUtils.allocateIntAndPut(
-            intArrayOf(
-                0, 1, 2, 0, 2, 3
+            texcoords = BufferUtils.allocateFloatAndPut(
+                floatArrayOf(
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    1.0f, 1.0f,
+                    0.0f, 1.0f
+                )
             )
-        )
-
-        texcoords = BufferUtils.allocateFloatAndPut(
-            floatArrayOf(
-                0.0f, 0.0f,
-                1.0f, 0.0f,
-                1.0f, 1.0f,
-                0.0f, 1.0f
-            )
-        )
+        }
 
         boundingBox = generateBoundingBox()
     }
@@ -61,32 +64,34 @@ open class Plane(sizes: Vector3f) : Mesh() {
         val vu = upperLeft - lowerLeft
         val vn = Vector3f(vr).cross(vu).normalize()
 
-        vertices = BufferUtils.allocateFloatAndPut(floatArrayOf(
-            // Front
-            lowerLeft.x, lowerLeft.y, lowerLeft.z,
-            lowerRight.x, lowerRight.y, lowerRight.z,
-            upperRight.x, upperRight.y, upperRight.z,
-            upperLeft.x, upperLeft.y, upperLeft.z
-        ))
+        geometry {
+            vertices = BufferUtils.allocateFloatAndPut(floatArrayOf(
+                // Front
+                lowerLeft.x, lowerLeft.y, lowerLeft.z,
+                lowerRight.x, lowerRight.y, lowerRight.z,
+                upperRight.x, upperRight.y, upperRight.z,
+                upperLeft.x, upperLeft.y, upperLeft.z
+            ))
 
-        normals = BufferUtils.allocateFloatAndPut(floatArrayOf(
-            // Front
-            vn.x, vn.y, vn.z,
-            vn.x, vn.y, vn.z,
-            vn.x, vn.y, vn.z,
-            vn.x, vn.y, vn.z
-        ))
+            normals = BufferUtils.allocateFloatAndPut(floatArrayOf(
+                // Front
+                vn.x, vn.y, vn.z,
+                vn.x, vn.y, vn.z,
+                vn.x, vn.y, vn.z,
+                vn.x, vn.y, vn.z
+            ))
 
-        indices = BufferUtils.allocateIntAndPut(intArrayOf(
-            0,1,2,0,2,3
-        ))
+            indices = BufferUtils.allocateIntAndPut(intArrayOf(
+                0,1,2,0,2,3
+            ))
 
-        texcoords = BufferUtils.allocateFloatAndPut(floatArrayOf(
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-            0.0f, 1.0f
-        ))
+            texcoords = BufferUtils.allocateFloatAndPut(floatArrayOf(
+                0.0f, 0.0f,
+                1.0f, 0.0f,
+                1.0f, 1.0f,
+                0.0f, 1.0f
+            ))
+        }
 
         boundingBox = generateBoundingBox()
     }

@@ -60,13 +60,15 @@ open class MouseRotate(
             val frameYaw = mouseSpeed() * (x - lastX) * 0.0174533f // 0.017 = PI/180
             val framePitch = mouseSpeed() * (y - lastY) * 0.0174533f
 
-            Quaternionf().rotateAxis(frameYaw, it.up)
-                .mul(targetedNode.rotation, targetedNode.rotation)
-                .normalize()
-            Quaternionf().rotateAxis(framePitch, it.right)
-                .mul(targetedNode.rotation, targetedNode.rotation)
-                .normalize()
-            targetedNode.needsUpdate = true
+            targetedNode.ifSpatial {
+                Quaternionf().rotateAxis(frameYaw, it.up)
+                    .mul(rotation, rotation)
+                    .normalize()
+                Quaternionf().rotateAxis(framePitch, it.right)
+                    .mul(rotation, rotation)
+                    .normalize()
+                needsUpdate = true
+            }
 
             targetedNode.lock.unlock()
 

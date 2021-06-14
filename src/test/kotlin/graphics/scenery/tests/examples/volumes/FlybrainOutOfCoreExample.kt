@@ -45,8 +45,9 @@ class FlybrainOutOfCoreExample: SceneryBase("Flybrain RAI Rendering example", 12
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
             perspectiveCamera(50.0f, windowWidth, windowHeight)
-
-            position = Vector3f(0.0f, 0.0f, 15.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 15.0f)
+            }
             scene.addChild(this)
         }
 
@@ -96,7 +97,7 @@ class FlybrainOutOfCoreExample: SceneryBase("Flybrain RAI Rendering example", 12
         )
         brain.transferFunction = TransferFunction.ramp(0.001f, 0.4f)
         brain.converterSetups.first().setDisplayRange(0.0, 255.0)
-        brain.position = Vector3f(-3.0f, 3.0f, 0.0f)
+        brain.spatial().position = Vector3f(-3.0f, 3.0f, 0.0f)
 
         @Suppress("UNCHECKED_CAST")
         val gaussDiff = Volume.fromRAI(
@@ -107,7 +108,7 @@ class FlybrainOutOfCoreExample: SceneryBase("Flybrain RAI Rendering example", 12
         )
         gaussDiff.transferFunction = TransferFunction.ramp(0.1f, 0.1f)
         gaussDiff.converterSetups.first().setDisplayRange(0.0, 255.0)
-        gaussDiff.position = Vector3f(3.0f, 3.0f, 0.0f)
+        gaussDiff.spatial().position = Vector3f(3.0f, 3.0f, 0.0f)
 
         @Suppress("UNCHECKED_CAST")
         val brainGauss1 = Volume.fromRAI(
@@ -118,7 +119,7 @@ class FlybrainOutOfCoreExample: SceneryBase("Flybrain RAI Rendering example", 12
         )
         brainGauss1.transferFunction = TransferFunction.ramp(0.1f, 0.1f)
         brainGauss1.converterSetups.first().setDisplayRange(0.0, 60.0)
-        brainGauss1.position = Vector3f(-3.0f, -3.0f, 0.0f)
+        brainGauss1.spatial().position = Vector3f(-3.0f, -3.0f, 0.0f)
 
         @Suppress("UNCHECKED_CAST")
         val brainGauss2 = Volume.fromRAI(
@@ -129,7 +130,7 @@ class FlybrainOutOfCoreExample: SceneryBase("Flybrain RAI Rendering example", 12
         )
         brainGauss2.transferFunction = TransferFunction.ramp(0.1f, 0.1f)
         brainGauss2.converterSetups.first().setDisplayRange(0.0, 60.0)
-        brainGauss2.position = Vector3f(3.0f, -3.0f, 0.0f)
+        brainGauss2.spatial().position = Vector3f(3.0f, -3.0f, 0.0f)
 
         scene.addChild(brain)
         scene.addChild(gaussDiff)
@@ -141,7 +142,7 @@ class FlybrainOutOfCoreExample: SceneryBase("Flybrain RAI Rendering example", 12
         }
 
         lights.mapIndexed { i, light ->
-            light.position = Vector3f(2.0f * i - 4.0f,  i - 1.0f, 0.0f)
+            light.spatial().position = Vector3f(2.0f * i - 4.0f,  i - 1.0f, 0.0f)
             light.emissionColor = Vector3f(1.0f, 1.0f, 1.0f)
             light.intensity = 50.0f
             scene.addChild(light)

@@ -22,16 +22,6 @@ import kotlin.reflect.KProperty
  */
 
 class DetachedHeadCamera(@Transient var tracker: TrackerInput? = null) : Camera() {
-    override var projection: Matrix4f = Matrix4f().identity()
-        get() = if(tracker != null && tracker is Display && tracker?.initializedAndWorking() == true) {
-            (tracker as? Display)?.getEyeProjection(0) ?: super.projection
-        } else {
-            super.projection
-        }
-        set(value) {
-            super.projection = value
-            field = value
-        }
 
     override var width: Int = 0
         get() = if(tracker != null && tracker is Display && tracker?.initializedAndWorking() == true) {
@@ -114,39 +104,48 @@ class DetachedHeadCamera(@Transient var tracker: TrackerInput? = null) : Camera(
         this.name = "DetachedHeadCamera-${tracker ?: "${counter.getAndIncrement()}"}"
     }
 
-    /**
-     * Returns this camera's transformation matrix, taking an eventually existing [TrackerInput]
-     * into consideration as well.
-     */
-    override fun getTransformation(): Matrix4f {
-        val tr = Matrix4f().translate(this.position * (-1.0f))
+    override fun createSpatial(): CameraSpatial {
+        return object: CameraSpatial(this) {
+            override var projection: Matrix4f = Matrix4f().identity()
+                get() = if(tracker != null && tracker is Display && tracker?.initializedAndWorking() == true) {
+                    (tracker as? Display)?.getEyeProjection(0) ?: super.projection
+                } else {
+                    super.projection
+                }
+                set(value) {
+                    super.projection = value
+                    field = value
+                }
+            /**
+             * Returns this camera's transformation matrix, taking an eventually existing [TrackerInput]
+             * into consideration as well.
+             */
+            override fun getTransformation(): Matrix4f {
+                val tr = Matrix4f().translate(this.position * (-1.0f))
 //        val r = Matrix4f.fromQuaternion(this.rotation)
 //        val hr = Matrix4f.fromQuaternion(this.headOrientation)
-
-        return tracker?.getWorkingTracker()?.getPose()?.times(tr) ?: Matrix4f().set(rotation) * tr
-    }
-
-    /**
-     * Returns this camera's transformation for eye with index [eye], taking an eventually existing [TrackerInput]
-     * into consideration as well.
-     */
-    override fun getTransformationForEye(eye: Int): Matrix4f {
-        val tr = Matrix4f().translate(this.position * (-1.0f))
+                return tracker?.getWorkingTracker()?.getPose()?.times(tr) ?: Matrix4f().set(spatial().rotation) * tr
+            }
+            /**
+             * Returns this camera's transformation for eye with index [eye], taking an eventually existing [TrackerInput]
+             * into consideration as well.
+             */
+            override fun getTransformationForEye(eye: Int): Matrix4f {
+                val tr = Matrix4f().translate(this.position * (-1.0f))
 //        val r = Matrix4f.fromQuaternion(this.rotation)
 //        val hr = Matrix4f.fromQuaternion(this.headOrientation)
-
-        return tracker?.getWorkingTracker()?.getPoseForEye(eye)?.times(tr) ?: Matrix4f().set(rotation) * tr
-    }
-
-    /**
-     * Returns this camera's transformation matrix, including a
-     * [preRotation] that is applied before the camera's transformation.
-     */
-    override fun getTransformation(preRotation: Quaternionf): Matrix4f {
-        val tr = Matrix4f().translate(this.position * (-1.0f) + this.headPosition)
-        val r = Matrix4f().set(preRotation.mul(this.rotation))
-
-        return r * tr
+                return tracker?.getWorkingTracker()?.getPoseForEye(eye)?.times(tr) ?: Matrix4f().set(spatial().rotation) * tr
+            }
+            /**
+             * Returns this camera's transformation matrix, including a
+             * [preRotation] that is applied before the camera's transformation.
+             */
+            override fun getTransformation(preRotation: Quaternionf): Matrix4f {
+                val tr = Matrix4f().translate(this.position * (-1.0f) + this@DetachedHeadCamera.headPosition)
+                val r = Matrix4f().set(preRotation.mul(this.rotation))
+                return r * tr
+            }
+        }
     }
 
     companion object {

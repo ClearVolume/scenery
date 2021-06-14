@@ -2,6 +2,7 @@ package graphics.scenery
 
 import graphics.scenery.backends.ShaderType
 import graphics.scenery.backends.Shaders
+import graphics.scenery.attribute.material.DefaultMaterial
 
 /**
  * This class stores paths to GLSL shader files to be used for rendering preferentially,
@@ -10,7 +11,7 @@ import graphics.scenery.backends.Shaders
  * @param[shaders]: The list of custom shaders to use as material
  * @author Ulrik Günther <hello@ulrik.is>
  */
-class ShaderMaterial(var shaders: Shaders) : Material() {
+class ShaderMaterial(var shaders: Shaders) : DefaultMaterial() {
 
     /**
      * Returns true if the current material is only use for compute

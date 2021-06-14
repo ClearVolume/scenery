@@ -3,6 +3,9 @@ package graphics.scenery.primitives
 import graphics.scenery.*
 import graphics.scenery.backends.Renderer
 import graphics.scenery.fonts.SDFFontAtlas
+import graphics.scenery.attribute.renderable.DefaultRenderable
+import graphics.scenery.attribute.renderable.Renderable
+import graphics.scenery.attribute.material.Material
 import graphics.scenery.textures.Texture
 import graphics.scenery.textures.Texture.RepeatMode
 import org.joml.Vector2i
@@ -19,7 +22,7 @@ import org.joml.Vector4f
  *
  * @constructor Returns a TextBoard instance, with [fontFamily] and a declared [ShaderMaterial]
  */
-class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillboard: Boolean = false) : Mesh(),
+class TextBoard(font: String = "SourceSansPro-Regular.ttf", isBillboard: Boolean = false) : Mesh(),
     DisableFrustumCulling {
 
     /** The text displayed on this font board */
@@ -29,7 +32,7 @@ class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillb
                 field = value
 
                 needsPreUpdate = true
-                dirty = true
+                geometry().dirty = true
             }
         }
 
@@ -45,7 +48,7 @@ class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillb
                 field = value
 
                 needsPreUpdate = true
-                dirty = true
+                geometry().dirty = true
             }
         }
 
@@ -69,55 +72,68 @@ class TextBoard(font: String = "SourceSansPro-Regular.ttf", override var isBillb
     init {
         name = "TextBoard"
         fontFamily = font
-        material = ShaderMaterial.fromFiles("DefaultForward.vert", "TextBoard.frag")
-        material.blending.transparent = true
-        material.blending.sourceColorBlendFactor = Blending.BlendFactor.SrcAlpha
-        material.blending.destinationColorBlendFactor = Blending.BlendFactor.OneMinusSrcAlpha
-        material.blending.sourceAlphaBlendFactor = Blending.BlendFactor.One
-        material.blending.destinationAlphaBlendFactor = Blending.BlendFactor.Zero
-        material.blending.colorBlending = Blending.BlendOp.add
-        material.blending.alphaBlending = Blending.BlendOp.add
-        material.cullingMode = Material.CullingMode.None
+        renderable {
+            this.isBillboard = isBillboard
+        }
+        setMaterial(ShaderMaterial.fromFiles("DefaultForward.vert", "TextBoard.frag")) {
+            blending.transparent = true
+            blending.sourceColorBlendFactor = Blending.BlendFactor.SrcAlpha
+            blending.destinationColorBlendFactor = Blending.BlendFactor.OneMinusSrcAlpha
+            blending.sourceAlphaBlendFactor = Blending.BlendFactor.One
+            blending.destinationAlphaBlendFactor = Blending.BlendFactor.Zero
+            blending.colorBlending = Blending.BlendOp.add
+            blending.alphaBlending = Blending.BlendOp.add
+            cullingMode = Material.CullingMode.None
+        }
 
         needsPreUpdate = true
     }
+    override fun createRenderable(): Renderable {
+        return object: DefaultRenderable(this) {
 
-    override fun preUpdate(renderer: Renderer, hub: Hub?) {
-        if(!needsPreUpdate || hub == null) {
-            return
+            val sdfCache = HashMap<String, SDFFontAtlas>()
+
+            override fun preUpdate(renderer: Renderer, hub: Hub?) {
+                if (!needsPreUpdate || hub == null) {
+                    return
+                }
+
+                sdfCache.getOrPut(fontFamily,
+                    {
+                        SDFFontAtlas(
+                            hub, fontFamily,
+                            maxDistance = hub.get<Settings>(SceneryElement.Settings)?.get("sdf.MaxDistance") ?: 12
+                        )
+                    }).apply {
+
+
+                    logger.debug("Updating mesh for text board {} to '{}'...", name, text)
+                    val m = this.createMeshForString(text).geometry()
+
+                    geometry {
+                        vertices = m.vertices
+                        normals = m.normals
+                        indices = m.indices
+                        texcoords = m.texcoords
+                    }
+                    atlasSize = Vector2i(this.atlasWidth, this.atlasHeight)
+
+                    material().textures["diffuse"] = Texture(
+                        Vector3i(atlasSize.x(), atlasSize.y(), 1),
+                        channels = 1, contents = this.getAtlas(),
+                        repeatUVW = RepeatMode.ClampToBorder.all(),
+                        normalized = true,
+                        mipmap = true
+                    )
+
+                    needsPreUpdate = false
+                }
+            }
+
+            /** Stringify the font board. Returns [fontFamily] used as well as the [text]. */
+            override fun toString(): String {
+                return "TextBoard ($fontFamily): $text"
+            }
         }
-
-        sdfCache.getOrPut(fontFamily,
-            { SDFFontAtlas(hub, fontFamily,
-                maxDistance = hub.get<Settings>(SceneryElement.Settings)?.get("sdf.MaxDistance") ?: 12) }).apply {
-
-
-            logger.debug("Updating mesh for text board {} to '{}'...", name, text)
-            val m = this.createMeshForString(text)
-
-            vertices = m.vertices
-            normals = m.normals
-            indices = m.indices
-            texcoords = m.texcoords
-            atlasSize = Vector2i(this.atlasWidth, this.atlasHeight)
-
-            material.textures["diffuse"] = Texture(
-                Vector3i(atlasSize.x(), atlasSize.y(), 1),
-                channels = 1, contents = this.getAtlas(),
-                repeatUVW = RepeatMode.ClampToBorder.all(),
-                normalized = true,
-                mipmap = true)
-
-            needsPreUpdate = false
-        }
-    }
-
-    /** Stringify the font board. Returns [fontFamily] used as well as the [text]. */
-    override fun toString(): String {
-        return "TextBoard ($fontFamily): $text"
-    }
-
-    companion object {
-        val sdfCache = HashMap<String, SDFFontAtlas>()
     }
 }

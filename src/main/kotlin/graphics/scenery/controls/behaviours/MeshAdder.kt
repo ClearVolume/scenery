@@ -51,10 +51,10 @@ open class MeshAdder constructor(protected val name: String,
         val posX = (x - width / 2.0f) / (width / 2.0f)
         val posY = -1.0f * (y - height / 2.0f) / (height / 2.0f)
         mesh.parent = scene
-        val mousePosition = cam!!.viewportToView(Vector2f(posX, posY))
-        val position4D = cam!!.viewToWorld(mousePosition)
+        val mousePosition = cam!!.spatial().viewportToView(Vector2f(posX, posY))
+        val position4D = cam!!.spatial().viewToWorld(mousePosition)
         val position = Vector3f(position4D.x(), position4D.y(), position4D.z())
-        mesh.position = position
+        mesh.spatial().position = position
         scene.addChild(mesh)
     }
 }

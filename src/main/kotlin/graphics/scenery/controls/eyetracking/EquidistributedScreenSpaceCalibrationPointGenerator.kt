@@ -33,6 +33,6 @@ class EquidistributedScreenSpaceCalibrationPointGenerator : CalibrationPointGene
             0.5f + 0.3f * points[index % (points.size - 1)].y(),
             cam.nearPlaneDistance + 0.5f)
 
-        return CalibrationPointGenerator.CalibrationPoint(v, cam.viewportToWorld(Vector2f(v.x() * 2.0f - 1.0f, v.y() * 2.0f - 1.0f)))
+        return CalibrationPointGenerator.CalibrationPoint(v, cam.spatial().viewportToWorld(Vector2f(v.x() * 2.0f - 1.0f, v.y() * 2.0f - 1.0f)))
     }
 }

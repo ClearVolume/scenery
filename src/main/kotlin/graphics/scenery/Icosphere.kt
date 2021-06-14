@@ -140,48 +140,51 @@ open class Icosphere(val radius: Float, val subdivisions: Int) : Mesh("Icosphere
         createBaseVertices(vertexBuffer, indexBuffer)
         val faces = refineTriangles(subdivisions, vertexBuffer, indexBuffer)
 
-        vertices = BufferUtils.allocateFloat(faces.size * 3 * 3)
-        normals = BufferUtils.allocateFloat(faces.size * 3 * 3)
-        texcoords = BufferUtils.allocateFloat(faces.size * 3 * 2)
-        indices = BufferUtils.allocateInt(0)
+        geometry {
 
-        faces.forEach { f ->
-            val v1 = vertexBuffer[f.first]
-            val v2 = vertexBuffer[f.second]
-            val v3 = vertexBuffer[f.third]
-            val uv1 = vertexToUV(v1.normalize())
-            val uv2 = vertexToUV(v2.normalize())
-            val uv3 = vertexToUV(v3.normalize())
+            vertices = BufferUtils.allocateFloat(faces.size * 3 * 3)
+            normals = BufferUtils.allocateFloat(faces.size * 3 * 3)
+            texcoords = BufferUtils.allocateFloat(faces.size * 3 * 2)
+            indices = BufferUtils.allocateInt(0)
 
-            (v1 * radius).get(vertices).position(vertices.position() + 3)
-            (v2 * radius).get(vertices).position(vertices.position() + 3)
-            (v3 * radius).get(vertices).position(vertices.position() + 3)
+            faces.forEach { f ->
+                val v1 = vertexBuffer[f.first]
+                val v2 = vertexBuffer[f.second]
+                val v3 = vertexBuffer[f.third]
+                val uv1 = vertexToUV(v1.normalize())
+                val uv2 = vertexToUV(v2.normalize())
+                val uv3 = vertexToUV(v3.normalize())
 
-            v1.get(normals).position(normals.position() + 3)
-            v2.get(normals).position(normals.position() + 3)
-            v3.get(normals).position(normals.position() + 3)
+                (v1 * radius).get(vertices).position(vertices.position() + 3)
+                (v2 * radius).get(vertices).position(vertices.position() + 3)
+                (v3 * radius).get(vertices).position(vertices.position() + 3)
 
-            val uvNormal = (uv2 - uv1).cross(uv3 - uv1)
-            if(uvNormal.z() < 0.0f) {
-                if(uv1.x() < 0.25f) {
-                    uv1.x = uv1.x() + 1.0f
+                v1.get(normals).position(normals.position() + 3)
+                v2.get(normals).position(normals.position() + 3)
+                v3.get(normals).position(normals.position() + 3)
+
+                val uvNormal = (uv2 - uv1).cross(uv3 - uv1)
+                if(uvNormal.z() < 0.0f) {
+                    if(uv1.x() < 0.25f) {
+                        uv1.x = uv1.x() + 1.0f
+                    }
+                    if(uv2.x() < 0.25f) {
+                        uv2.x = uv2.x() + 1.0f
+                    }
+                    if(uv3.x() < 0.25f) {
+                        uv3.x = uv3.x() + 1.0f
+                    }
                 }
-                if(uv2.x() < 0.25f) {
-                    uv2.x = uv2.x() + 1.0f
-                }
-                if(uv3.x() < 0.25f) {
-                    uv3.x = uv3.x() + 1.0f
-                }
+
+                uv1.get(texcoords).position(texcoords.position() + 2)
+                uv2.get(texcoords).position(texcoords.position() + 2)
+                uv3.get(texcoords).position(texcoords.position() + 2)
             }
 
-            uv1.get(texcoords).position(texcoords.position() + 2)
-            uv2.get(texcoords).position(texcoords.position() + 2)
-            uv3.get(texcoords).position(texcoords.position() + 2)
+            vertices.flip()
+            normals.flip()
+            texcoords.flip()
         }
-
-        vertices.flip()
-        normals.flip()
-        texcoords.flip()
 
         boundingBox = generateBoundingBox()
     }

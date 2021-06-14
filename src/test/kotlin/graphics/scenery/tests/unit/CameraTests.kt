@@ -53,7 +53,7 @@ class CameraTests {
 
         val boxesInFront = (0 until 10).map {
             val b = Box()
-            b.position = Vector3f(0.0f,
+            b.spatial().position = Vector3f(0.0f,
                 Random.randomFromRange(-0.5f, 0.5f),
                 Random.randomFromRange(2.0f, 10.0f))
             s.addChild(b)
@@ -62,12 +62,12 @@ class CameraTests {
 
         val boxesBehind = (0 until 10).map {
             val b = Box()
-            b.position = Random.random3DVectorFromRange(-0.5f, -10.0f)
+            b.spatial().position = Random.random3DVectorFromRange(-0.5f, -10.0f)
             s.addChild(b)
             b
         }
 
-        s.updateWorld(true, true)
+        s.spatial().updateWorld(true, true)
 
         assertTrue { boxesInFront.all { cam.canSee(it) } }
         assertFalse { boxesBehind.all { cam.canSee(it) } }
@@ -82,14 +82,14 @@ class CameraTests {
 
         (0 until 10).map {
             val b = Box()
-            b.position = Vector3f(0.0f,
+            b.spatial().position = Vector3f(0.0f,
                 0f,
                 Random.randomFromRange(2.0f, 10.0f))
             s.addChild(b)
             b
         }
 
-        s.updateWorld(true, true)
+        s.spatial().updateWorld(true, true)
         val results = cam.getNodesForScreenSpacePosition(1280/2,720/2)
         assertEquals(10,results.matches.size)
     }
@@ -101,8 +101,10 @@ class CameraTests {
         cam.perspectiveCamera(50.0f, 1280, 720, 0.01f, 1000.0f)
         s.addChild(cam)
 
-        cam.position = Vector3f(0f)
-        cam.rotation.lookAlong(Vector3f(0f,0f,1f),Vector3f(0f,1f,0f))
+        cam.spatial {
+            position = Vector3f(0f)
+            rotation.lookAlong(Vector3f(0f,0f,1f),Vector3f(0f,1f,0f))
+        }
 
         val (pos,dir) = cam.screenPointToRay(1280/2,720/2)
 

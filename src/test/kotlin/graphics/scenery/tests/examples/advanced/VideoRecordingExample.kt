@@ -23,20 +23,26 @@ class VideoRecordingExample: SceneryBase("VideoRecordingExample") {
 
         val box = Box(Vector3f(1.0f, 1.0f, 1.0f))
         with(box) {
-            box.name = "le box du win"
-            box.material.textures["diffuse"] = Texture.fromImage(Image.fromResource("textures/helix.png", TexturedCubeExample::class.java))
+            name = "le box du win"
+            material {
+                textures["diffuse"] = Texture.fromImage(Image.fromResource("textures/helix.png", TexturedCubeExample::class.java))
+            }
             scene.addChild(this)
         }
 
         val light = PointLight(radius = 15.0f)
-        light.position = Vector3f(0.0f, 0.0f, 2.0f)
+        light.spatial {
+            position = Vector3f(0.0f, 0.0f, 2.0f)
+        }
         light.intensity = 5.0f
         light.emissionColor = Vector3f(1.0f, 1.0f, 1.0f)
         scene.addChild(light)
 
         val cam: Camera = DetachedHeadCamera()
         with(cam) {
-            position = Vector3f(0.0f, 0.0f, 5.0f)
+            spatial {
+                position = Vector3f(0.0f, 0.0f, 5.0f)
+            }
             perspectiveCamera(50.0f, 512, 512)
 
             scene.addChild(this)
@@ -44,9 +50,11 @@ class VideoRecordingExample: SceneryBase("VideoRecordingExample") {
 
         thread {
             while (true) {
-                box.rotation.rotateY(Random.randomFromRange(-0.04f, 0.04f))
-                box.rotation.rotateZ(Random.randomFromRange(-0.04f, 0.04f))
-                box.needsUpdate = true
+                box.spatial {
+                    rotation.rotateY(Random.randomFromRange(-0.04f, 0.04f))
+                    rotation.rotateZ(Random.randomFromRange(-0.04f, 0.04f))
+                    needsUpdate = true
+                }
 
                 Thread.sleep(20)
             }

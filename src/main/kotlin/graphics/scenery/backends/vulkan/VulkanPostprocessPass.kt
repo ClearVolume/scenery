@@ -105,7 +105,7 @@ object VulkanPostprocessPass {
                 name.startsWith("ShaderParameters") -> "ShaderParameters-${pass.name}"
                 name.startsWith("Inputs") -> "input-${pass.name}-${spec.set}"
                 name.startsWith("Matrices") -> {
-                    val offsets = sceneUBOs.first().rendererMetadata()!!.UBOs["Matrices"]!!.second.offsets
+                    val offsets = sceneUBOs.first().renderableOrNull()?.rendererMetadata()!!.UBOs["Matrices"]!!.second.offsets
                     this.uboOffsets.put(offsets)
                     requiredDynamicOffsets += 3
 
