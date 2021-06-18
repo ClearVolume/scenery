@@ -9,6 +9,7 @@ import graphics.scenery.utils.LazyLogger
 import graphics.scenery.utils.SystemHelpers
 import graphics.scenery.utils.extensions.minus
 import graphics.scenery.utils.extensions.times
+import org.joml.Vector2i
 import org.lwjgl.system.MemoryUtil
 import java.io.BufferedInputStream
 import java.io.File
@@ -21,6 +22,7 @@ import java.nio.IntBuffer
 import java.nio.file.Files
 import java.util.ArrayList
 import java.util.HashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Simple Mesh class to store geometry, inherits from [HasGeometry].
@@ -46,6 +48,11 @@ open class Mesh(override var name: String = "Mesh") : Node(name), HasGeometry {
     final override var texcoordSize = 2
     /** Geometry type of the Mesh. Also see [HasGeometry] and [GeometryType] */
     final override var geometryType = GeometryType.TRIANGLES
+
+    data class Scissor(val extent: Vector2i, val offset: Vector2i)
+    data class DrawState(val count: Int, val indexOffset: Int, val vertexOffset: Int, val scissor: Scissor? = null)
+
+    val splitDrawCalls = CopyOnWriteArrayList<DrawState>()
 
     /**
      * Reads geometry from a file given by [filename]. The extension of [filename] will determine

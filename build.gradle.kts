@@ -50,7 +50,7 @@ dependencies {
     implementation(misc.trove)
     implementation(jna.bundles.all)
     implementation(platform("org.lwjgl:lwjgl-bom:3.2.3"))
-    listOf("", "-glfw", "-jemalloc", "-vulkan", "-opengl", "-openvr", "-xxhash", "-remotery").forEach {
+    listOf("", "-glfw", "-jemalloc", "-vulkan", "-opengl", "-openvr", "-xxhash", "-remotery", "-stb").forEach {
         if (it == "-vulkan")
             api("org.lwjgl:lwjgl$it")
         else
@@ -97,6 +97,13 @@ dependencies {
     testImplementation(imagej.core)
     testImplementation(imagej.ij)
     testImplementation(imgLib2.ij)
+
+    listOf("core", "glfw", "gl").forEach {
+        implementation("kotlin.graphics:imgui-$it:1.79+04")
+    }
+    implementation("kotlin.graphics:glm:0.9.9.1-3+23")
+    implementation("kotlin.graphics:kool:0.9.0+23")
+    implementation("kotlin.graphics:uno-core:0.7.9+35")
 }
 
 val isRelease: Boolean

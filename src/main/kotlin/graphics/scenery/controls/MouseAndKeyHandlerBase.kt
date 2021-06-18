@@ -255,8 +255,8 @@ open class MouseAndKeyHandlerBase : ControllerListener, ExtractsNatives {
         buttonClicks.clear()
         keyClicks.clear()
 
-        for ((buttons, value) in inputTriggerMap.allBindings) {
-            val behaviourKeys = value ?: continue
+        for ((buttons, values) in inputTriggerMap.allBindings) {
+            val behaviourKeys = values ?: continue
 
             for (behaviourKey in behaviourKeys) {
                 val behaviour = behaviours.get(behaviourKey) ?: continue

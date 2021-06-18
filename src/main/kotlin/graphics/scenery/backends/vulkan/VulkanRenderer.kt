@@ -6,6 +6,7 @@ import graphics.scenery.backends.vulkan.VulkanDevice.VulkanObjectType.*
 import graphics.scenery.spirvcrossj.Loader
 import graphics.scenery.spirvcrossj.libspirvcrossj
 import graphics.scenery.textures.Texture
+import graphics.scenery.ui.MenuNode
 import graphics.scenery.utils.*
 import io.github.classgraph.ClassGraph
 import kotlinx.coroutines.*
@@ -86,7 +87,12 @@ open class VulkanRenderer(hub: Hub,
         None,
         PositionNormalTexcoord,
         PositionTexcoords,
-        PositionNormal
+        PositionNormal,
+
+        PositionNormalTexcoord2D,
+        PositionTexcoords2D,
+        PositionNormal2D,
+        PositionTexcoordsColor2D
     }
 
     enum class StandardSemaphores {
@@ -835,6 +841,13 @@ open class VulkanRenderer(hub: Hub,
                 node.vertices.remaining() > 0 && node.normals.remaining() > 0 && node.texcoords.remaining() > 0 -> VertexDataKinds.PositionNormalTexcoord
                 node.vertices.remaining() > 0 && node.normals.remaining() > 0 && node.texcoords.remaining() == 0 -> VertexDataKinds.PositionNormal
                 node.vertices.remaining() > 0 && node.normals.remaining() == 0 && node.texcoords.remaining() > 0 -> VertexDataKinds.PositionTexcoords
+
+                node.vertices.remaining() > 0 && node.normals.remaining() > 0 && node.texcoords.remaining() > 0 && node.vertexSize == 2 -> VertexDataKinds.PositionNormalTexcoord2D
+                node.vertices.remaining() > 0 && node.normals.remaining() > 0 && node.texcoords.remaining() == 0 && node.vertexSize == 2  -> VertexDataKinds.PositionNormal2D
+                node.vertices.remaining() > 0 && node.normals.remaining() == 0 && node.texcoords.remaining() > 0 && node.vertexSize == 2 -> VertexDataKinds.PositionTexcoords2D
+
+                // TODO: Figure out where to put color, remove explicit node reference
+                node.vertices.remaining() > 0 && node.normals.remaining() == 0 && node.texcoords.remaining() == 0 && node.vertexSize == 2 && node is MenuNode -> VertexDataKinds.PositionTexcoordsColor2D
                 else -> VertexDataKinds.PositionNormalTexcoord
             }
 
@@ -1033,6 +1046,12 @@ open class VulkanRenderer(hub: Hub,
                     stride = 3 + 3
                     attributeDesc = VkVertexInputAttributeDescription.calloc(2)
 
+                    attributeDesc.get(0)
+                        .binding(0)
+                        .location(0)
+                        .format(VK_FORMAT_R32G32B32_SFLOAT)
+                        .offset(0)
+
                     attributeDesc.get(1)
                         .binding(0)
                         .location(1)
@@ -1043,6 +1062,12 @@ open class VulkanRenderer(hub: Hub,
                 VertexDataKinds.PositionNormalTexcoord -> {
                     stride = 3 + 3 + 2
                     attributeDesc = VkVertexInputAttributeDescription.calloc(3)
+
+                    attributeDesc.get(0)
+                        .binding(0)
+                        .location(0)
+                        .format(VK_FORMAT_R32G32B32_SFLOAT)
+                        .offset(0)
 
                     attributeDesc.get(1)
                         .binding(0)
@@ -1061,18 +1086,98 @@ open class VulkanRenderer(hub: Hub,
                     stride = 3 + 2
                     attributeDesc = VkVertexInputAttributeDescription.calloc(2)
 
+                    attributeDesc.get(0)
+                        .binding(0)
+                        .location(0)
+                        .format(VK_FORMAT_R32G32B32_SFLOAT)
+                        .offset(0)
+
                     attributeDesc.get(1)
                         .binding(0)
                         .location(1)
                         .format(VK_FORMAT_R32G32_SFLOAT)
                         .offset(3 * 4)
                 }
-            }
 
-            attributeDesc?.let {
-                if(it.capacity() > 0) {
-                    it.get(0).binding(0).location(0).format(VK_FORMAT_R32G32B32_SFLOAT).offset(0)
+                VertexDataKinds.PositionNormal2D -> {
+                    stride = 2 + 2
+                    attributeDesc = VkVertexInputAttributeDescription.calloc(2)
+                    attributeDesc.get(0)
+                        .binding(0)
+                        .location(1)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(0)
+
+                    attributeDesc.get(1)
+                        .binding(0)
+                        .location(1)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(2 * 4)
                 }
+
+                VertexDataKinds.PositionNormalTexcoord2D -> {
+                    stride = 2 + 2 + 2
+                    attributeDesc = VkVertexInputAttributeDescription.calloc(3)
+                    attributeDesc.get(0)
+                        .binding(0)
+                        .location(1)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(0)
+
+                    attributeDesc.get(1)
+                        .binding(0)
+                        .location(1)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(2 * 4)
+
+                    attributeDesc.get(2)
+                        .binding(0)
+                        .location(2)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(2 * 4 + 2 * 4)
+                }
+
+                VertexDataKinds.PositionTexcoords2D -> {
+                    stride = 2 + 2
+                    attributeDesc = VkVertexInputAttributeDescription.calloc(2)
+                    attributeDesc.get(0)
+                        .binding(0)
+                        .location(1)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(0)
+
+
+                    attributeDesc.get(1)
+                        .binding(0)
+                        .location(1)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(2 * 4)
+                }
+
+                VertexDataKinds.PositionTexcoordsColor2D -> {
+                    stride = 2 + 2 + 1
+                    attributeDesc = VkVertexInputAttributeDescription.calloc(3)
+
+                    attributeDesc.get(0)
+                        .binding(0)
+                        .location(0)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(0)
+
+                    attributeDesc.get(1)
+                        .binding(0)
+                        .location(1)
+                        .format(VK_FORMAT_R32G32_SFLOAT)
+                        .offset(2 * 4)
+
+                    attributeDesc.get(2)
+                        .binding(0)
+                        .location(2)
+                        .format(VK_FORMAT_R8G8B8A8_UNORM)
+                        .offset(2 * 4 + 2 * 4)
+                }
+
+
             }
 
             val bindingDesc: VkVertexInputBindingDescription.Buffer? = if (attributeDesc != null) {

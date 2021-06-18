@@ -391,7 +391,42 @@ object VulkanScenePass {
 
                 if (s.isIndexed) {
                     VK10.vkCmdBindIndexBuffer(this, pass.vulkanMetadata.vertexBuffers.get(0), s.indexOffset, VK10.VK_INDEX_TYPE_UINT32)
-                    VK10.vkCmdDrawIndexed(this, s.indexCount, s.instanceCount, 0, 0, 0)
+
+                    if(node is Mesh && node.splitDrawCalls.isNotEmpty()) {
+                        val rect = VkRect2D.calloc(1)
+                        node.splitDrawCalls.forEach { state ->
+                            state.scissor?.let { scissor ->
+                                rect.offset().set(scissor.offset.x, scissor.offset.y)
+                                rect.extent().set(scissor.extent.x, scissor.extent.y)
+
+                                VK10.vkCmdSetScissor(
+                                    this,
+                                    0,
+                                    rect
+                                )
+                            }
+
+                            VK10.vkCmdDrawIndexed(
+                                this,
+                                state.count,
+                                s.instanceCount,
+                                state.indexOffset,
+                                state.vertexOffset,
+                                0
+                            )
+                        }
+
+                        rect.free()
+                    } else {
+                        VK10.vkCmdDrawIndexed(
+                            this,
+                            s.indexCount,
+                            s.instanceCount,
+                            0,
+                            0,
+                            0
+                        )
+                    }
                 } else {
                     VK10.vkCmdDraw(this, s.vertexCount, s.instanceCount, 0, 0)
                 }

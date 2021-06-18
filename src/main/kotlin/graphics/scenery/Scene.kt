@@ -87,15 +87,19 @@ open class Scene : Node("RootNode") {
      * @param[s] The Scene to search in
      * @param[func] A lambda taking a [Node] and returning a Boolean for matching.
      * @return A list of [Node]s that match [func].
+     *
+     * TODO remove s, since it corresponds always to the receiver
      */
     fun discover(s: Scene, func: (Node) -> Boolean, useDiscoveryBarriers: Boolean = false): ArrayList<Node> {
         val visited = HashSet<Node>()
         val matched = ArrayList<Node>()
 
         fun discover(current: Node, f: (Node) -> Boolean) {
+//            println("discover(${current.name})")
             if (!visited.add(current)) return
             for (v in current.children) {
                 if (f(v)) {
+//                    println("added")
                     matched.add(v)
                 }
 

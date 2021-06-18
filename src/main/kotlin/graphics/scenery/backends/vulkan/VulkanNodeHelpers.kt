@@ -4,6 +4,7 @@ import graphics.scenery.*
 import graphics.scenery.backends.*
 import graphics.scenery.textures.Texture
 import graphics.scenery.textures.UpdatableTexture
+import graphics.scenery.ui.MenuNode
 import graphics.scenery.utils.LazyLogger
 import org.lwjgl.system.jemalloc.JEmalloc
 import org.lwjgl.vulkan.VK10
@@ -81,19 +82,26 @@ object VulkanNodeHelpers {
         state.vertexCount = vertices.remaining() / n.vertexSize
         logger.trace("${node.name} has ${vertices.remaining()} floats and ${texcoords.remaining() / n.texcoordSize} remaining")
 
-        for (index in 0 until vertices.remaining() step 3) {
-            fb.put(vertices.get())
-            fb.put(vertices.get())
-            fb.put(vertices.get())
+        if(node !is MenuNode) {
+            for (index in 0 until vertices.remaining() step node.vertexSize) {
+                for (j in 0 until node.vertexSize) {
+                    fb.put(vertices.get())
+                }
 
-            fb.put(normals.get())
-            fb.put(normals.get())
-            fb.put(normals.get())
+                for (j in 0 until node.vertexSize) {
+                    fb.put(normals.get())
+                }
 
-            if (texcoords.remaining() > 0) {
-                fb.put(texcoords.get())
-                fb.put(texcoords.get())
+                if (texcoords.remaining() > 0) {
+                    fb.put(texcoords.get())
+                    fb.put(texcoords.get())
+                }
             }
+        } else {
+            val count = vertices.remaining()
+            fb.put(vertices)
+            state.vertexCount = count / 5
+//            logger.info("Creating vertex buffer for Menu node, ${state.vertexCount} vertices, type=${state.vertexInputType}")
         }
 
         logger.trace("Adding {} bytes to strided buffer", indices.remaining() * 4)
