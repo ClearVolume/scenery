@@ -588,20 +588,20 @@ open class SceneryBase @JvmOverloads constructor(var applicationName: String,
             }
         }
 
-        @JvmStatic fun xinitThreads() {
-            if(Platform.get() == Platform.LINUX && xinitThreadsCalled == false) {
-                logger.debug("Running XInitThreads")
-                XLib.INSTANCE.XInitThreads()
-                xinitThreadsCalled = true
-            }
-        }
-
         @JvmStatic fun URL.sanitizedPath(): String {
             // cuts off the initial / on Windows
             return if(Platform.get() == Platform.WINDOWS) {
                 this.path.substringAfter("/")
             } else {
                 this.path
+            }
+        }
+
+        @JvmStatic fun xinitThreads() {
+            if(Platform.get() == Platform.LINUX && xinitThreadsCalled == false) {
+                logger.debug("Running XInitThreads")
+                XLib.INSTANCE.XInitThreads()
+                xinitThreadsCalled = true
             }
         }
     }

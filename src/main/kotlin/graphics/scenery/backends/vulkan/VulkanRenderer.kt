@@ -7,6 +7,7 @@ import graphics.scenery.spirvcrossj.Loader
 import graphics.scenery.spirvcrossj.libspirvcrossj
 import graphics.scenery.textures.Texture
 import graphics.scenery.utils.*
+import graphics.scenery.volumes.VolumeManager
 import io.github.classgraph.ClassGraph
 import kotlinx.coroutines.*
 import org.joml.*
@@ -177,7 +178,7 @@ open class VulkanRenderer(hub: Hub,
                     flow = flowAndPasses.first
                     flowAndPasses.second.forEach { (k, v) -> renderpasses.put(k, v) }
 
-                    semaphores.forEach { it.value.forEach { semaphore -> vkDestroySemaphore(device.vulkanDevice, semaphore, null) } }
+                    semaphores.forEach { it.value.forEach { semaphore -> device.removeSemaphore(semaphore) }}
                     semaphores = prepareStandardSemaphores(device)
 
                     // Create render command buffers
@@ -345,8 +346,6 @@ open class VulkanRenderer(hub: Hub,
 
     protected var debugCallbackHandle: Long = -1L
 
-    protected var semaphoreCreateInfo: VkSemaphoreCreateInfo
-
     // Create static Vulkan resources
     protected var queue: VkQueue
     protected var transferQueue: VkQueue
@@ -492,9 +491,15 @@ open class VulkanRenderer(hub: Hub,
 
 
         // Create the Vulkan instance
-        instance = if(embedIn != null || System.getProperty("scenery.Headless")?.toBoolean() == true) {
+        val headlessRequested = System.getProperty("scenery.Headless")?.toBoolean() ?: false
+        instance = if(embedIn != null || headlessRequested) {
             logger.debug("Running embedded or headless, skipping GLFW initialisation.")
-            createInstance(null, validation)
+            createInstance(
+                null,
+                validation,
+                headless = headlessRequested,
+                embedded = embedIn != null
+            )
         } else {
             if (!glfwInit()) {
                 val buffer = PointerBuffer.allocateDirect(255)
@@ -678,12 +683,6 @@ open class VulkanRenderer(hub: Hub,
                 }
             }
         }, 0, 1000)
-
-        // Info struct to create a semaphore
-        semaphoreCreateInfo = VkSemaphoreCreateInfo.calloc()
-            .sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO)
-            .pNext(NULL)
-            .flags(0)
 
         lastTime = System.nanoTime()
         time = 0.0f
@@ -925,7 +924,7 @@ open class VulkanRenderer(hub: Hub,
         return true
     }
 
-    fun destroyNode(node: Node) {
+    protected fun destroyNode(node: Node, onShutdown: Boolean = false) {
         logger.trace("Destroying node ${node.name}...")
         if (!node.metadata.containsKey("VulkanRenderer")) {
             return
@@ -940,6 +939,10 @@ open class VulkanRenderer(hub: Hub,
             node.rendererMetadata()?.vertexBuffers?.forEach {
                 it.value.close()
             }
+        }
+
+        if(onShutdown) {
+            node.rendererMetadata()?.textures?.forEach { it.value.close() }
         }
 
         node.metadata.remove("VulkanRenderer")
@@ -1202,8 +1205,7 @@ open class VulkanRenderer(hub: Hub,
 
         StandardSemaphores.values().forEach {
             map[it] = swapchain.images.map { i ->
-                VU.getLong("Semaphore for $i",
-                    { vkCreateSemaphore(device.vulkanDevice, semaphoreCreateInfo, null, this) }, {})
+                device.createSemaphore()
             }.toTypedArray()
         }
 
@@ -1804,13 +1806,13 @@ open class VulkanRenderer(hub: Hub,
         totalFrames++
     }
 
-    private fun createInstance(requiredExtensions: PointerBuffer? = null, enableValidations: Boolean = false): VkInstance {
+    private fun createInstance(requiredExtensions: PointerBuffer? = null, enableValidations: Boolean = false, headless: Boolean = false, embedded: Boolean = false): VkInstance {
         return stackPush().use { stack ->
             val appInfo = VkApplicationInfo.callocStack(stack)
                 .sType(VK_STRUCTURE_TYPE_APPLICATION_INFO)
                 .pApplicationName(stack.UTF8(applicationName))
                 .pEngineName(stack.UTF8("scenery"))
-                .apiVersion(VK_MAKE_VERSION(1, 0, 73))
+                .apiVersion(VK_MAKE_VERSION(1, 1, 0))
 
             val additionalExts = ArrayList<String>()
             hub?.getWorkingHMDDisplay()?.getVulkanInstanceExtensions()?.forEach { additionalExts.add(it) }
@@ -1825,21 +1827,27 @@ open class VulkanRenderer(hub: Hub,
 
             // allocate enough pointers for already pre-required extensions, plus HMD-required extensions, plus the debug extension
             val size = requiredExtensions?.remaining() ?: 0
-            val enabledExtensionNames = stack.callocPointer(size + additionalExts.size + 2)
+
+            val enabledExtensionNames = if(!headless) {
+                val buffer = stack.callocPointer(size + additionalExts.size + 2)
+                val platformSurfaceExtension = when {
+                    Platform.get() === Platform.WINDOWS -> stack.UTF8(VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
+                    Platform.get() === Platform.LINUX -> stack.UTF8(VK_KHR_XLIB_SURFACE_EXTENSION_NAME)
+                    Platform.get() === Platform.MACOSX -> stack.UTF8(VK_MVK_MACOS_SURFACE_EXTENSION_NAME)
+                    else -> throw RendererUnavailableException("Vulkan is not supported on ${Platform.get()}")
+                }
+
+                buffer.put(platformSurfaceExtension)
+                buffer.put(stack.UTF8(VK_KHR_SURFACE_EXTENSION_NAME))
+                buffer
+            } else {
+                stack.callocPointer(size + additionalExts.size)
+            }
 
             if(requiredExtensions != null) {
                 enabledExtensionNames.put(requiredExtensions)
             }
 
-            val platformSurfaceExtension = when {
-                Platform.get() === Platform.WINDOWS -> stack.UTF8(VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
-                Platform.get() === Platform.LINUX -> stack.UTF8(VK_KHR_XLIB_SURFACE_EXTENSION_NAME)
-                Platform.get() === Platform.MACOSX -> stack.UTF8(VK_MVK_MACOS_SURFACE_EXTENSION_NAME)
-                else -> throw RendererUnavailableException("Vulkan is not supported on ${Platform.get()}")
-            }
-
-            enabledExtensionNames.put(platformSurfaceExtension)
-            enabledExtensionNames.put(stack.UTF8(VK_KHR_SURFACE_EXTENSION_NAME))
             utf8Exts.forEach { enabledExtensionNames.put(it) }
             enabledExtensionNames.flip()
 
@@ -1859,6 +1867,15 @@ open class VulkanRenderer(hub: Hub,
                 .pApplicationInfo(appInfo)
                 .ppEnabledExtensionNames(enabledExtensionNames)
                 .ppEnabledLayerNames(enabledLayerNames)
+
+            val extensions = (0 until enabledExtensionNames.remaining()).map {
+                memUTF8(enabledExtensionNames.get(it))
+            }
+            val layers = (0 until enabledLayerNames.remaining()).map {
+                memUTF8(enabledLayerNames.get(it))
+            }
+
+            logger.info("Creating Vulkan instance with extensions ${extensions.joinToString(",")} and layers ${layers.joinToString(",")}")
 
             val instance = VU.getPointer("Creating Vulkan instance",
                 { vkCreateInstance(createInfo, null, this) }, {})
@@ -2156,18 +2173,25 @@ open class VulkanRenderer(hub: Hub,
         logger.info("Renderer teardown started.")
         vkQueueWaitIdle(queue)
 
+        logger.debug("Closing nodes...")
+        scene.discover(scene, { true }).forEach {
+            destroyNode(it, onShutdown = true)
+        }
+
+        // The hub might contain elements that are both in the scene graph,
+        // and in the hub, e.g. a VolumeManager. We clean them here as well.
+        hub?.find { it is Node }?.forEach { (_, node) ->
+            (node as? Node)?.let { destroyNode(it, onShutdown = true) }
+        }
+
+        scene.metadata.remove("DescriptorCache")
+        scene.initialized = false
+
         logger.debug("Cleaning texture cache...")
         textureCache.forEach {
             logger.debug("Cleaning ${it.key}...")
             it.value.close()
         }
-
-        logger.debug("Closing nodes...")
-        scene.discover(scene, { true }).forEach {
-            destroyNode(it)
-        }
-        scene.metadata.remove("DescriptorCache")
-        scene.initialized = false
 
         logger.debug("Closing buffers...")
         buffers.LightParameters.close()
@@ -2195,7 +2219,7 @@ open class VulkanRenderer(hub: Hub,
         }
 
         logger.debug("Closing descriptor sets and pools...")
-        descriptorSetLayouts.forEach { vkDestroyDescriptorSetLayout(device.vulkanDevice, it.value, null) }
+//        descriptorSetLayouts.forEach { vkDestroyDescriptorSetLayout(device.vulkanDevice, it.value, null) }
 
         logger.debug("Closing command buffers...")
         ph.commandBuffers.free()
@@ -2203,9 +2227,7 @@ open class VulkanRenderer(hub: Hub,
         memFree(ph.waitSemaphore)
         memFree(ph.waitStages)
 
-        semaphores.forEach { it.value.forEach { semaphore -> vkDestroySemaphore(device.vulkanDevice, semaphore, null) } }
-
-        semaphoreCreateInfo.free()
+        semaphores.forEach { it.value.forEach { semaphore -> device.removeSemaphore(semaphore) }}
 
         logger.debug("Closing swapchain...")
 

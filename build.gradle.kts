@@ -11,7 +11,9 @@ plugins {
 //    scenery.docs
     scenery.publish
     scenery.sign
+    id("com.github.elect86.sciJava") version "0.0.4"
     id("org.jetbrains.dokka") version "1.4.30"
+    id("org.sonarqube") version "3.1.1"
     jacoco
     id("sciJava.platform") version "30.0.0+15" // workaround for jitpack issue
 }
@@ -151,6 +153,19 @@ jacoco {
 
 java.withSourcesJar()
 
+sonarqube {
+    properties {
+        property("sonar.projectKey", "scenerygraphics_scenery")
+        property("sonar.organization", "scenerygraphics-1")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
+    }
+}
+
+plugins.withType<JacocoPlugin>() {
+    tasks["test"].finalizedBy("jacocoTestReport")
+}
+
 // disable Gradle metadata file creation on Jitpack, as jitpack modifies
 // the metadata file, resulting in broken metadata with missing native dependencies.
 if(System.getenv("JITPACK") != null) {
@@ -158,3 +173,4 @@ if(System.getenv("JITPACK") != null) {
         enabled = false
     }
 }
+
