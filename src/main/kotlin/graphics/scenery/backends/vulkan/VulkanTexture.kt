@@ -724,7 +724,12 @@ open class VulkanTexture(val device: VulkanDevice,
             { vkCreateSampler(device.vulkanDevice, samplerInfo, null, this) },
             { samplerInfo.free() })
 
+        logger.debug("Created sampler {}", sampler.toHexString().toLowerCase())
+        val oldSampler = image.sampler
         image.sampler = sampler
+        if(oldSampler != -1L) {
+            vkDestroySampler(device.vulkanDevice, oldSampler, null)
+        }
         return sampler
     }
 

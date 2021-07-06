@@ -87,21 +87,15 @@ open class VulkanRenderpass(val name: String, var config: RenderConfigReader.Ren
         default = { VulkanCommandBuffer(device, null, true) })
 
     /** This renderpasses' semaphore */
-    var semaphore: Long
+    var semaphore: Long = -1L
         get() {
             return semaphoreBacking.get()
         }
 
     private var semaphoreBacking = RingBuffer(size = ringBufferSize,
-        default = {
-            val semaphoreCreateInfo = VkSemaphoreCreateInfo.calloc()
-            .sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO)
-            .pNext(NULL)
-            .flags(0)
-
-            VU.getLong("vkCreateSemaphore",
-                { vkCreateSemaphore(device.vulkanDevice, semaphoreCreateInfo, null, this) }, {})
-        })
+        default = { device.createSemaphore() },
+        cleanup = { device.removeSemaphore(it) }
+    )
 
     /** This renderpasses' [RenderConfigReader.RenderpassConfig]. */
     var passConfig: RenderConfigReader.RenderpassConfig = config.renderpasses.getValue(name)
@@ -165,14 +159,6 @@ open class VulkanRenderpass(val name: String, var config: RenderConfigReader.Ren
         protected set
 
     init {
-        val semaphoreCreateInfo = VkSemaphoreCreateInfo.calloc()
-            .sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO)
-            .pNext(NULL)
-            .flags(0)
-
-        semaphore = VU.getLong("vkCreateSemaphore",
-            { vkCreateSemaphore(device.vulkanDevice, semaphoreCreateInfo, null, this) }, {})
-
         recreated = System.nanoTime()
     }
 
@@ -679,12 +665,12 @@ open class VulkanRenderpass(val name: String, var config: RenderConfigReader.Ren
         UBOs.forEach { it.value.close() }
         ownDescriptorSetLayouts.forEach {
             logger.debug("Destroying DSL ${it.toHexString()}")
-            vkDestroyDescriptorSetLayout(device.vulkanDevice, it, null)
+            device.removeDescriptorSetLayout(it)
         }
         descriptorSetLayouts.clear()
         oldDescriptorSetLayouts.forEach {
             logger.debug("Destroying GC'd DSL ${it.first} ${it.second.toHexString()}")
-            vkDestroyDescriptorSetLayout(device.vulkanDevice, it.second, null)
+            device.removeDescriptorSetLayout(it.second)
         }
         oldDescriptorSetLayouts.clear()
 
@@ -698,15 +684,12 @@ open class VulkanRenderpass(val name: String, var config: RenderConfigReader.Ren
         commandBufferBacking.reset()
 
         logger.debug("Destroying semaphores")
-        if(semaphore != -1L) {
-            vkDestroySemaphore(device.vulkanDevice, semaphore, null)
-            memFree(waitSemaphores)
-            memFree(signalSemaphores)
-            memFree(waitStages)
-            memFree(submitCommandBuffers)
+        semaphoreBacking.close()
 
-            semaphore = -1L
-        }
+        memFree(waitSemaphores)
+        memFree(signalSemaphores)
+        memFree(waitStages)
+        memFree(submitCommandBuffers)
     }
 
     companion object {

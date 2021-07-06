@@ -200,8 +200,8 @@ class OpenGLSwapchain(device: VulkanDevice,
 
                 val view = t.createImageView(image, format)
 
-                imageAvailableSemaphores.add(VU.getLong("image available semaphore", { VK10.vkCreateSemaphore(this@OpenGLSwapchain.device.vulkanDevice, semaphoreCreateInfo, null, this) }, {}))
-                imageRenderedSemaphores.add(VU.getLong("image ready semaphore", { VK10.vkCreateSemaphore(this@OpenGLSwapchain.device.vulkanDevice, semaphoreCreateInfo, null, this) }, {}))
+                imageAvailableSemaphores.add(this@OpenGLSwapchain.device.createSemaphore())
+                imageRenderedSemaphores.add(this@OpenGLSwapchain.device.createSemaphore())
                 fences.add(VU.getLong("Swapchain image fence", { VK10.vkCreateFence(this@OpenGLSwapchain.device.vulkanDevice, fenceCreateInfo, null, this) }, {}))
                 imageUseFences.add(VU.getLong("Swapchain image usage fence", { VK10.vkCreateFence(this@OpenGLSwapchain.device.vulkanDevice, fenceCreateInfo, null, this) }, {}))
                 inFlight.add(null)

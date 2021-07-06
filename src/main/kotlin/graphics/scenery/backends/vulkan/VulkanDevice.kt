@@ -12,6 +12,7 @@ import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VK11.VK_FORMAT_G16_B16_R16_3PLANE_444_UNORM
 import org.lwjgl.vulkan.VK11.VK_FORMAT_G8B8G8R8_422_UNORM
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 typealias QueueIndexWithProperties = Pair<Int, VkQueueFamilyProperties>
 
@@ -305,6 +306,10 @@ open class VulkanDevice(
 
         vkDeviceWaitIdle(vulkanDevice)
 
+        descriptorSetLayouts.forEach {
+            removeDescriptorSetLayout(it.value)
+        }
+
         descriptorPools.forEach {
             vkDestroyDescriptorPool(vulkanDevice, it.handle, null)
         }
@@ -316,6 +321,24 @@ open class VulkanDevice(
         memoryProperties.free()
     }
 
+    fun createSemaphore(): Long {
+        return stackPush().use { stack ->
+            val semaphoreCreateInfo = VkSemaphoreCreateInfo.callocStack(stack)
+                .sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO)
+                .pNext(MemoryUtil.NULL)
+                .flags(0)
+
+            val semaphore = VU.getLong("vkCreateSemaphore",
+                { vkCreateSemaphore(this@VulkanDevice.vulkanDevice, semaphoreCreateInfo, null, this) }, {})
+            logger.debug("Created semaphore {}", semaphore.toHexString().toLowerCase())
+            semaphore
+        }
+    }
+
+    fun removeSemaphore(semaphore: Long) {
+        logger.debug("Removing semaphore {}", semaphore.toHexString().toLowerCase())
+        vkDestroySemaphore(this.vulkanDevice, semaphore, null)
+    }
 
     data class DescriptorPool(val handle: Long, var free: Int = maxTextures + maxUBOs + maxInputAttachments + maxUBOs) {
 
@@ -511,6 +534,11 @@ open class VulkanDevice(
      * The shader stages to which the DSL should be visible can be set via [shaderStages].
      */
     fun createDescriptorSetLayout(types: List<Pair<Int, Int>>, binding: Int = 0, shaderStages: Int): Long {
+        val current = descriptorSetLayouts[DescriptorSetLayout(types, binding, shaderStages)]
+        if( current != null) {
+            return current
+        }
+
         return stackPush().use { stack ->
             val layoutBinding = VkDescriptorSetLayoutBinding.callocStack(types.size, stack)
 
@@ -533,8 +561,29 @@ open class VulkanDevice(
 
             logger.debug("Created DSL ${descriptorSetLayout.toHexString()} with ${types.size} descriptors.")
 
+            descriptorSetLayouts[DescriptorSetLayout(types, binding, shaderStages)] = descriptorSetLayout
             descriptorSetLayout
         }
+    }
+
+    data class DescriptorSetLayout(val types: List<Pair<Int, Int>>, val binding: Int, val stages: Int)
+    private val descriptorSetLayouts = ConcurrentHashMap<DescriptorSetLayout, Long>()
+
+    /**
+     * Destroys a given descriptor set layout.
+     */
+    fun removeDescriptorSetLayout(dsl: Long) {
+        val current = descriptorSetLayouts.filterValues { it == dsl }.toList()
+
+        if(current.isEmpty()) {
+            return
+        }
+
+        logger.debug("Removing ${current.size} known descriptor set layout (${dsl.toHexString().toLowerCase()})")
+        current.forEach {
+                vkDestroyDescriptorSetLayout(this.vulkanDevice, it.second, null)
+                descriptorSetLayouts.remove(it.first)
+            }
     }
 
     /**
@@ -543,29 +592,11 @@ open class VulkanDevice(
      * customized,  as well as the shader stages to which the DSL should be visible ([shaderStages]).
      */
     fun createDescriptorSetLayout(type: Int = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, binding: Int = 0, descriptorNum: Int = 1, descriptorCount: Int = 1, shaderStages: Int = VK_SHADER_STAGE_ALL): Long {
-        return stackPush().use { stack ->
-            val layoutBinding = VkDescriptorSetLayoutBinding.callocStack(descriptorNum, stack)
-            (binding until descriptorNum).forEach { i ->
-                layoutBinding[i]
-                    .binding(i)
-                    .descriptorType(type)
-                    .descriptorCount(descriptorCount)
-                    .stageFlags(shaderStages)
-                    .pImmutableSamplers(null)
-            }
+        val types = (0 until descriptorNum).map {
+            type to descriptorCount
+        }.toList()
 
-            val descriptorLayout = VkDescriptorSetLayoutCreateInfo.callocStack(stack)
-                .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO)
-                .pNext(MemoryUtil.NULL)
-                .pBindings(layoutBinding)
-
-            val descriptorSetLayout = VU.getLong("vkCreateDescriptorSetLayout",
-                { vkCreateDescriptorSetLayout(vulkanDevice, descriptorLayout, null, this) }, {})
-
-            logger.debug("Created DSL ${descriptorSetLayout.toHexString()} with $descriptorNum descriptors with $descriptorCount elements.")
-
-            descriptorSetLayout
-        }
+        return createDescriptorSetLayout(types, binding, shaderStages)
     }
 
     /**

@@ -19,7 +19,18 @@ tasks {
         } else {
             systemProperty("scenery.Renderer", "VulkanRenderer")
             systemProperty("scenery.ExampleRunner.OutputDir", "screenshots")
+
+            val props = System.getProperties().filter { (k, _) -> k.toString().startsWith("scenery.") }
+
+            println("Adding properties ${props.size}/$props")
+            val additionalArgs = System.getenv("SCENERY_JVM_ARGS")
+            allJvmArgs = if (additionalArgs != null) {
+                allJvmArgs + props.flatMap { (k, v) -> listOf("-D$k=$v") } + additionalArgs
+            } else {
+                allJvmArgs + props.flatMap { (k, v) -> listOf("-D$k=$v") }
+            }
         }
+
         finalizedBy(jacocoTestReport) // report is always generated after tests run
     }
 

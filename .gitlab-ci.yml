@@ -6,8 +6,7 @@ cache:
     - .gradle-user-home/
 
 variables:
-  #  MAVEN_OPTS: "-Dmaven.repo.local=maven.repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Xmx4g"
-  JAVA_HOME: "/usr/lib/jvm/java-8-openjdk-amd64"
+  JAVA_HOME: "/usr/lib/jvm/java-11-openjdk-amd64"
   PDB_CACHE_DIR: "./pdb-store/cache"
   PDB_DIR: "./pdb-store"
   MODEL_DIR: "./models"
@@ -19,12 +18,12 @@ unit-tests-no-gpu:
   before_script:
     - mkdir -p ./pdb-store/cache
     - apt-get update -qq --force-yes > /dev/null
-    - apt-get install -qq -y --allow-downgrades --allow-remove-essential --allow-change-held-packages unzip wget git openjdk-8-jdk-headless curl libgl1-mesa-glx sudo sed > /dev/null
+    - apt-get install -qq -y --allow-downgrades --allow-remove-essential --allow-change-held-packages unzip wget git curl libgl1-mesa-glx sudo sed > /dev/null
     - if [ ! -d "$MODEL_DIR" ]; then wget -q https://ulrik.is/scenery-demo-models.zip && unzip -q scenery-demo-models.zip; fi
     - sudo sed -i -e '/^assistive_technologies=/s/^/#/' /etc/java-*-openjdk/accessibility.properties
     - chmod +x gradlew
   script:
-    - ./gradlew build -x dokkaHtml -x dokkaHtmlJar -x javadoc -x dokkaJavadocJar -PjvmTarget=1.8 -PsourceCompatibility=1.8
+    - ./gradlew build -x dokkaHtml -x dokkaHtmlJar -x javadoc -x dokkaJavadocJar
 
 # base job for running with GPUs
 .base-job-gpu: &base-job-gpu
@@ -32,11 +31,8 @@ unit-tests-no-gpu:
     - mkdir -p ./pdb-store/cache
     # Installs Maven, Vulkan development libraries, etc.
     - apt-get update -qq --force-yes > /dev/null
-    - apt-get install -qq -y --allow-downgrades --allow-remove-essential --allow-change-held-packages unzip wget git openjdk-8-jdk-headless libvulkan1 libvulkan-dev vulkan-utils ocl-icd-opencl-dev clinfo curl > /dev/null
-    - curl -sL https://deb.nodesource.com/setup_14.x | bash -
-    - apt-get install -qq --force-yes nodejs
-    - npm install --save argos-cli
-    - mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
+    - apt-get install -qq -y curl sudo sed > /dev/null
+    - sudo sed -i -e '/^assistive_technologies=/s/^/#/' /etc/java-*-openjdk/accessibility.properties
     # Output Vulkan driver information, but do not fail in case of non-zero
     # return (happens e.g. if $DISPLAY is not set)
     - vulkaninfo || true
@@ -45,15 +41,19 @@ unit-tests-no-gpu:
     - chmod +x gradlew
     - ./gradlew --stop # stop any deamon https://stackoverflow.com/a/58397542/1047713
   script:
-    - ./gradlew build -S -x dokkaHtml -x dokkaHtmlJar -x javadoc -x dokkaJavadocJar -PjvmTarget=1.8 -PsourceCompatibility=1.8 -Pgpu=true -i
+    # At the moment, we need to run this twice because of a Vulkan instance
+    # teardown bug in the 460.xx series Nvidia drivers that causes the driver
+    # to malfunction after creation of ~30 Vulkan instances.
+    - ./gradlew build -S -x dokkaHtml -x dokkaHtmlJar -x javadoc -x dokkaJavadocJar -Pgpu=true -Dscenery.Workarounds.DontCloseVulkanInstances=true -i
   artifacts:
     when: always
     expire_in: 48h
     paths:
       - results.tar.bz2
+      - "hs_err_*"
 
 scenery-nvidia:
-  image: nvidia/vulkan:1.1.121-cuda-10.1-alpha
+  image: scenerygraphics/nvidia-vulkan:1.2.170.0-ubuntu20.04
   <<: *base-job-gpu
   after_script:
     - nvidia-smi

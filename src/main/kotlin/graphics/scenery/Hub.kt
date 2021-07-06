@@ -172,6 +172,16 @@ class Hub(val name: String = "default") {
         }
     }
 
+    /**
+     * Returns all Hub elements fitting the given [predicate].
+     */
+    fun find(predicate: (Any) -> Boolean): Map<SceneryElement, Any> {
+        return elements.filter { predicate.invoke(it.value) }
+    }
+
+    /**
+     * Returns a string representation of the Hub
+     */
     override fun toString(): String {
         return elementsAsString()
     }

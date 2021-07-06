@@ -102,11 +102,11 @@ open class VulkanFramebuffer(protected val device: VulkanDevice,
          */
         override fun close() {
             if(descriptorSetLayout != -1L) {
-                vkDestroyDescriptorSetLayout(device.vulkanDevice, descriptorSetLayout, null)
+                device.removeDescriptorSetLayout(descriptorSetLayout)
             }
             loadStoreDescriptorSetLayout?.let {
                 if (loadStoreDescriptorSetLayout != -1L) {
-                    vkDestroyDescriptorSetLayout(device.vulkanDevice, it, null)
+                    device.removeDescriptorSetLayout(it)
                 }
             }
 
@@ -755,8 +755,8 @@ open class VulkanFramebuffer(protected val device: VulkanDevice,
         if(initialized) {
             attachments.values.forEach { it.close() }
 
-            vkDestroyDescriptorSetLayout(device.vulkanDevice, outputDescriptorSetLayout, null)
-            vkDestroyDescriptorSetLayout(device.vulkanDevice, imageLoadStoreDescriptorSetLayout, null)
+            device.removeDescriptorSetLayout(outputDescriptorSetLayout)
+            device.removeDescriptorSetLayout(imageLoadStoreDescriptorSetLayout)
 
             vkDestroyRenderPass(device.vulkanDevice, renderPass.get(0), null)
             memFree(renderPass)

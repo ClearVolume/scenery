@@ -323,8 +323,8 @@ open class VulkanSwapchain(open val device: VulkanDevice,
                     imageViews[i] = VU.getLong("create image view",
                         { VK10.vkCreateImageView(this@VulkanSwapchain.device.vulkanDevice, colorAttachmentView, null, this) }, {})
 
-                    imageAvailableSemaphores.add(VU.getLong("image available semaphore", { vkCreateSemaphore(this@VulkanSwapchain.device.vulkanDevice, semaphoreCreateInfo, null, this) }, {}))
-                    imageRenderedSemaphores.add(VU.getLong("image ready semaphore", { vkCreateSemaphore(this@VulkanSwapchain.device.vulkanDevice, semaphoreCreateInfo, null, this) }, {}))
+                    imageAvailableSemaphores.add(this@VulkanSwapchain.device.createSemaphore())
+                    imageRenderedSemaphores.add(this@VulkanSwapchain.device.createSemaphore())
                     fences.add(VU.getLong("Swapchain image fence", { vkCreateFence(this@VulkanSwapchain.device.vulkanDevice, fenceCreateInfo, null, this)}, {}))
                     imageUseFences.add(VU.getLong("Swapchain image usage fence", { vkCreateFence(this@VulkanSwapchain.device.vulkanDevice, fenceCreateInfo, null, this)}, {}))
                     inFlight.add(null)
@@ -581,9 +581,9 @@ open class VulkanSwapchain(open val device: VulkanDevice,
      * Closes associated semaphores and fences.
      */
     protected fun closeSyncPrimitives() {
-        imageAvailableSemaphores.forEach { VK10.vkDestroySemaphore(device.vulkanDevice, it, null) }
+        imageAvailableSemaphores.forEach { device.removeSemaphore(it) }
         imageAvailableSemaphores.clear()
-        imageRenderedSemaphores.forEach { VK10.vkDestroySemaphore(device.vulkanDevice, it, null) }
+        imageRenderedSemaphores.forEach { device.removeSemaphore(it) }
         imageRenderedSemaphores.clear()
 
         fences.forEach { VK10.vkDestroyFence(device.vulkanDevice, it, null) }
@@ -604,9 +604,9 @@ open class VulkanSwapchain(open val device: VulkanDevice,
         KHRSwapchain.vkDestroySwapchainKHR(device.vulkanDevice, handle, null)
         vkDestroySurfaceKHR(device.instance, surface, null)
 
-        imageAvailableSemaphores.forEach { vkDestroySemaphore(device.vulkanDevice, it, null) }
+        imageAvailableSemaphores.forEach { device.removeSemaphore(it) }
         imageAvailableSemaphores.clear()
-        imageRenderedSemaphores.forEach { vkDestroySemaphore(device.vulkanDevice, it, null) }
+        imageRenderedSemaphores.forEach { device.removeSemaphore(it) }
         imageRenderedSemaphores.clear()
 
         fences.forEach { vkDestroyFence(device.vulkanDevice, it, null) }

@@ -9,7 +9,7 @@ import java.util.*
  * the element, and advance the write position. Running one of these two operations
  * again will then affect the next element of the ring buffer.
  */
-open class RingBuffer<T: Any>(var size: Int, default: ((Int) -> T)? = null) {
+open class RingBuffer<T: Any>(var size: Int, default: ((Int) -> T)? = null, protected val cleanup: ((T) -> Any)? = null) {
 
     protected var backingStore: ArrayList<T> = ArrayList(size)
 
@@ -62,6 +62,16 @@ open class RingBuffer<T: Any>(var size: Int, default: ((Int) -> T)? = null) {
         currentReadPosition = 0
         currentWritePosition = 0
 
+        backingStore.clear()
+    }
+
+    /**
+     * Closes the ring buffer, invoking cleanup on its elements.
+     */
+    fun close() {
+        backingStore.forEach {
+            cleanup?.invoke(it)
+        }
         backingStore.clear()
     }
 }
