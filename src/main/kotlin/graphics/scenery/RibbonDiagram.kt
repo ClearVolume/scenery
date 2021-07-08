@@ -67,7 +67,7 @@ class RibbonDiagram(val protein: Protein, private val displaySS: Boolean = false
      */
     private val structure = protein.structure
     private val chains = structure.chains
-    private val groups = chains.flatMap { it.atomGroups }
+    val groups = chains.flatMap { it.atomGroups }
     private val widthAlpha = 2.0f
     private val widthBeta = 2.2f
     private val widthCoil = 1.0f
@@ -227,7 +227,7 @@ class RibbonDiagram(val protein: Protein, private val displaySS: Boolean = false
                         for (i in 0..sectionVerticesCount) {
                             if (i + (sectionVerticesCount + 1) * j <= helpSpline.lastIndex) {
                                 splineOffset++
-                                subSpline.add(helpSpline[i + (sectionVerticesCount + 1) * j])
+                                subSpline.add(helpSpline[i + (sectionVerticesCount+1) * j])
                                 ssSubList.add(octagon)
                             }
                         }
@@ -492,7 +492,7 @@ class RibbonDiagram(val protein: Protein, private val displaySS: Boolean = false
          * Extension function to make a Vector out of an atom position. We do not
          * need any information about an atom besides its name and its position.
          */
-        private fun Atom.getVector(): Vector3f {
+        fun Atom.getVector(): Vector3f {
             return Vector3f(this.x.toFloat(), this.y.toFloat(), this.z.toFloat())
         }
 

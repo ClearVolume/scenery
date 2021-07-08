@@ -4,6 +4,7 @@ import graphics.scenery.*
 import graphics.scenery.utils.LazyLogger
 import org.biojava.nbio.structure.Group
 import org.biojava.nbio.structure.secstruc.SecStrucElement
+import org.joml.Vector3f
 import org.junit.Test
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.jvm.isAccessible
@@ -121,6 +122,15 @@ class RibbonDiagramTests {
             RibbonDiagram(protein)
         }
 
+    }
+
+    @Test
+    fun testSplinePointsToResidueNumber() {
+        val protein = Protein.fromID("4u68")
+        val ribbon = RibbonDiagram(protein)
+        val residuesCount = ribbon.children.flatMap { chain -> chain.children }.flatMap { it.children }.size
+        val allResidues = protein.structure.chains.flatMap { it.atomGroups }.filter { it.hasAminoAtoms() }
+        assertEquals(residuesCount, allResidues.size)
     }
 
 }
