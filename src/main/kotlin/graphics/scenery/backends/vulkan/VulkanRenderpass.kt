@@ -1,9 +1,7 @@
 package graphics.scenery.backends.vulkan
 
+import graphics.scenery.*
 import org.joml.Vector3f
-import graphics.scenery.GeometryType
-import graphics.scenery.Node
-import graphics.scenery.Settings
 import graphics.scenery.backends.*
 import graphics.scenery.utils.LazyLogger
 import graphics.scenery.utils.RingBuffer
@@ -439,6 +437,183 @@ open class VulkanRenderpass(val name: String, var config: RenderConfigReader.Ren
         initializePipeline("default", shaderModules)
     }
 
+
+    private data class PipelineConfig(
+        val shaderModules: HashSet<VulkanShaderModule>,
+        val cullingMode: Material.CullingMode,
+        val depthTest: Material.DepthTest,
+        val blending: Blending,
+        val wireframe: Boolean,
+        val vertexDescription: VulkanRenderer.VertexDescription
+    )
+
+    private val configuredPipelines = ConcurrentHashMap<PipelineConfig, VulkanPipeline>()
+
+    private fun VulkanPipeline.applyPipelineConfig(config: PipelineConfig): VulkanPipeline {
+        when(config.cullingMode) {
+            Material.CullingMode.None -> rasterizationState.cullMode(VK_CULL_MODE_NONE)
+            Material.CullingMode.Front -> rasterizationState.cullMode(VK_CULL_MODE_FRONT_BIT)
+            Material.CullingMode.Back -> rasterizationState.cullMode(VK_CULL_MODE_BACK_BIT)
+            Material.CullingMode.FrontAndBack -> rasterizationState.cullMode(VK_CULL_MODE_FRONT_AND_BACK)
+        }
+
+        when(config.depthTest) {
+            Material.DepthTest.Equal -> depthStencilState.depthCompareOp(VK_COMPARE_OP_EQUAL)
+            Material.DepthTest.Less -> depthStencilState.depthCompareOp(VK_COMPARE_OP_LESS)
+            Material.DepthTest.Greater -> depthStencilState.depthCompareOp(VK_COMPARE_OP_GREATER)
+            Material.DepthTest.LessEqual -> depthStencilState.depthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL)
+            Material.DepthTest.GreaterEqual -> depthStencilState.depthCompareOp(VK_COMPARE_OP_GREATER_OR_EQUAL)
+            Material.DepthTest.Always -> depthStencilState.depthCompareOp(VK_COMPARE_OP_ALWAYS)
+            Material.DepthTest.Never -> depthStencilState.depthCompareOp(VK_COMPARE_OP_NEVER)
+        }
+
+        if(config.wireframe) {
+            rasterizationState.polygonMode(VK_POLYGON_MODE_LINE)
+        } else {
+            rasterizationState.polygonMode(VK_POLYGON_MODE_FILL)
+        }
+
+        if(config.blending.transparent) {
+            with(config.blending) {
+                val blendStates = colorBlendState.pAttachments()
+                for (attachment in 0 until (blendStates?.capacity() ?: 0)) {
+                    val state = blendStates?.get(attachment)
+
+                    @Suppress("SENSELESS_COMPARISON", "IfThenToSafeAccess")
+                    if (state != null) {
+                        state.blendEnable(true)
+                            .colorBlendOp(colorBlending.toVulkan())
+                            .srcColorBlendFactor(sourceColorBlendFactor.toVulkan())
+                            .dstColorBlendFactor(destinationColorBlendFactor.toVulkan())
+                            .alphaBlendOp(alphaBlending.toVulkan())
+                            .srcAlphaBlendFactor(sourceAlphaBlendFactor.toVulkan())
+                            .dstAlphaBlendFactor(destinationAlphaBlendFactor.toVulkan())
+                            .colorWriteMask(VK_COLOR_COMPONENT_R_BIT or VK_COLOR_COMPONENT_G_BIT or VK_COLOR_COMPONENT_B_BIT or VK_COLOR_COMPONENT_A_BIT)
+                    }
+                }
+            }
+        }
+
+        return this
+    }
+
+    fun registerPipelineForNode(pipeline: VulkanPipeline, node: Node) {
+        pipelines["preferred-${node.uuid}"] = pipeline
+    }
+
+    fun initializePipeline(shaderModules: List<VulkanShaderModule>, cullingMode: Material.CullingMode, depthTest: Material.DepthTest, blending: Blending, wireframe: Boolean, vertexDescription: VulkanRenderer.VertexDescription?): VulkanPipeline {
+        val config = PipelineConfig(hashSetOf(*shaderModules.toTypedArray()),
+            cullingMode,
+            depthTest,
+            blending,
+            wireframe,
+            vertexDescription ?: vertexDescriptors.getValue(VulkanRenderer.VertexDataKinds.PositionNormalTexcoord))
+
+        return configuredPipelines.getOrPut(config) {
+            initializeInputAttachmentDescriptorSetLayouts(shaderModules)
+            val reqDescriptorLayouts = ArrayList<Long>()
+
+            val framebuffer = output.values.first()
+            val p = VulkanPipeline(device, this, framebuffer.renderPass.get(0), pipelineCache)
+
+            p.addShaderStages(shaderModules)
+
+            logger.debug("${descriptorSetLayouts.count()} DSLs are available: ${descriptorSetLayouts.keys.joinToString(", ")}")
+
+            val blendMasks = VkPipelineColorBlendAttachmentState.calloc(framebuffer.colorAttachmentCount())
+            (0 until framebuffer.colorAttachmentCount()).forEach {
+                if (passConfig.renderTransparent) {
+                    blendMasks[it]
+                        .blendEnable(true)
+                        .colorBlendOp(passConfig.colorBlendOp.toVulkan())
+                        .srcColorBlendFactor(passConfig.srcColorBlendFactor.toVulkan())
+                        .dstColorBlendFactor(passConfig.dstColorBlendFactor.toVulkan())
+                        .alphaBlendOp(passConfig.alphaBlendOp.toVulkan())
+                        .srcAlphaBlendFactor(passConfig.srcAlphaBlendFactor.toVulkan())
+                        .dstAlphaBlendFactor(passConfig.dstAlphaBlendFactor.toVulkan())
+                        .colorWriteMask(VK_COLOR_COMPONENT_R_BIT or VK_COLOR_COMPONENT_G_BIT or VK_COLOR_COMPONENT_B_BIT or VK_COLOR_COMPONENT_A_BIT)
+                } else {
+                    blendMasks[it]
+                        .blendEnable(false)
+                        .colorWriteMask(0xF)
+                }
+            }
+
+            p.colorBlendState.pAttachments()?.free()
+            p.colorBlendState
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO)
+                .pNext(NULL)
+                .pAttachments(blendMasks)
+
+            p.depthStencilState
+                .depthTestEnable(passConfig.depthTestEnabled)
+                .depthWriteEnable(passConfig.depthWriteEnabled)
+
+            p.descriptorSpecs.entries
+                .groupBy { it.value.set }
+                .toSortedMap()
+                .forEach { (setId, group) ->
+                    logger.debug(
+                        "${this.name}: Initialising DSL for set $setId with ${
+                            group.sortedBy { it.value.binding }
+                                .joinToString(", ") { "${it.value.name} (${it.value.set}/${it.value.binding})" }
+                        } (${group.size} members)"
+                    )
+                    reqDescriptorLayouts.add(
+                        initializeDescriptorSetLayoutForSpecs(
+                            setId,
+                            group.sortedBy { it.value.binding })
+                    )
+                }
+
+            p.applyPipelineConfig(config)
+
+            if (logger.isDebugEnabled) {
+                logger.debug(
+                    "DS are: ${
+                        p.descriptorSpecs.entries.sortedBy { it.value.binding }.sortedBy { it.value.set }
+                            .joinToString { "${it.key} (set=${it.value.set}, binding=${it.value.binding}, type=${it.value.type})" }
+                    }")
+            }
+
+            logger.debug("Required DSLs: ${reqDescriptorLayouts.joinToString { it.toHexString() }}")
+
+            when {
+                (passConfig.type == RenderConfigReader.RenderpassType.quad && vertexDescription != null)
+                    && shaderModules.first().type != ShaderType.ComputeShader -> {
+                    p.rasterizationState.cullMode(VK_CULL_MODE_FRONT_BIT)
+                    p.rasterizationState.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE)
+
+                    p.createPipelines(
+                        vi = vertexDescriptors.getValue(VulkanRenderer.VertexDataKinds.None).state,
+                        descriptorSetLayouts = reqDescriptorLayouts,
+                        onlyForTopology = GeometryType.TRIANGLES
+                    )
+                }
+
+                (passConfig.type == RenderConfigReader.RenderpassType.geometry
+                    || passConfig.type == RenderConfigReader.RenderpassType.lights)
+                    && shaderModules.first().type != ShaderType.ComputeShader && vertexDescription != null -> {
+                    p.createPipelines(
+                        vi = vertexDescription.state,
+                        descriptorSetLayouts = reqDescriptorLayouts
+                    )
+                }
+
+                passConfig.type == RenderConfigReader.RenderpassType.compute
+                    || shaderModules.first().type == ShaderType.ComputeShader -> {
+                    p.createPipelines(
+                        descriptorSetLayouts = reqDescriptorLayouts,
+                        type = VulkanPipeline.PipelineType.Compute,
+                        vi = null
+                    )
+                }
+            }
+
+            logger.debug("Prepared pipeline for $name")
+            p
+        }
+    }
     /**
      * Initialiases a custom [VulkanPipeline] with [pipelineName], built out of the [shaders] for a specific [vertexInputType].
      * The pipeline settings are customizable using the lambda [settings].
@@ -675,7 +850,8 @@ open class VulkanRenderpass(val name: String, var config: RenderConfigReader.Ren
     override fun close() {
         logger.debug("Closing renderpass $name...")
         output.forEach { it.value.close() }
-        pipelines.forEach { it.value.close() }
+        configuredPipelines.forEach { it.value.close() }
+        pipelines.clear()
         UBOs.forEach { it.value.close() }
         ownDescriptorSetLayouts.forEach {
             logger.debug("Destroying DSL ${it.toHexString()}")

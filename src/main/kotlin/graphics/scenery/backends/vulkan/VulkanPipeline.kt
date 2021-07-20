@@ -1,6 +1,7 @@
 package graphics.scenery.backends.vulkan
 
 import graphics.scenery.GeometryType
+import graphics.scenery.Node
 import graphics.scenery.backends.ShaderConsistencyException
 import graphics.scenery.utils.LazyLogger
 import org.lwjgl.system.MemoryUtil.*

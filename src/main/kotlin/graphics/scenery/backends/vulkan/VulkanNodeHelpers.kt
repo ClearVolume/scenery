@@ -359,16 +359,15 @@ object VulkanNodeHelpers {
 
         node.rendererMetadata()?.let { s ->
             renderpasses.filter { it.value.passConfig.type == RenderConfigReader.RenderpassType.geometry || it.value.passConfig.type == RenderConfigReader.RenderpassType.lights }
-                .map { pass ->
-                    val shaders = when {
-                        node.material is ShaderMaterial -> {
-                            logger.debug("Initializing preferred pipeline for ${node.name} from ShaderMaterial")
+                .map { (passName, pass) ->
+                    val shaders = when (node.material) {
+                        is ShaderMaterial -> {
+                            logger.debug("Initializing preferred pipeline for ${node.name} in pass $passName from ShaderMaterial")
                             (node.material as ShaderMaterial).shaders
                         }
-
                         else -> {
-                            logger.debug("Initializing pass-default shader preferred pipeline for ${node.name}")
-                            Shaders.ShadersFromFiles(pass.value.passConfig.shaders.map { "shaders/$it" }.toTypedArray())
+                            logger.debug("Initializing pass-default shader preferred pipeline for ${node.name} in pass $passName")
+                            Shaders.ShadersFromFiles(pass.passConfig.shaders.map { "shaders/$it" }.toTypedArray())
                         }
                     }
 
@@ -388,54 +387,14 @@ object VulkanNodeHelpers {
                         }
                     }
 
-                    pass.value.initializeInputAttachmentDescriptorSetLayouts(shaderModules)
-                    pass.value.initializePipeline("preferred-${node.uuid}",
-                        shaderModules, settings = { pipeline ->
-                        when(node.material.cullingMode) {
-                            Material.CullingMode.None -> pipeline.rasterizationState.cullMode(VK10.VK_CULL_MODE_NONE)
-                            Material.CullingMode.Front -> pipeline.rasterizationState.cullMode(VK10.VK_CULL_MODE_FRONT_BIT)
-                            Material.CullingMode.Back -> pipeline.rasterizationState.cullMode(VK10.VK_CULL_MODE_BACK_BIT)
-                            Material.CullingMode.FrontAndBack -> pipeline.rasterizationState.cullMode(VK10.VK_CULL_MODE_FRONT_AND_BACK)
-                        }
-
-                        when(node.material.depthTest) {
-                            Material.DepthTest.Equal -> pipeline.depthStencilState.depthCompareOp(VK10.VK_COMPARE_OP_EQUAL)
-                            Material.DepthTest.Less -> pipeline.depthStencilState.depthCompareOp(VK10.VK_COMPARE_OP_LESS)
-                            Material.DepthTest.Greater -> pipeline.depthStencilState.depthCompareOp(VK10.VK_COMPARE_OP_GREATER)
-                            Material.DepthTest.LessEqual -> pipeline.depthStencilState.depthCompareOp(VK10.VK_COMPARE_OP_LESS_OR_EQUAL)
-                            Material.DepthTest.GreaterEqual -> pipeline.depthStencilState.depthCompareOp(VK10.VK_COMPARE_OP_GREATER_OR_EQUAL)
-                            Material.DepthTest.Always -> pipeline.depthStencilState.depthCompareOp(VK10.VK_COMPARE_OP_ALWAYS)
-                            Material.DepthTest.Never -> pipeline.depthStencilState.depthCompareOp(VK10.VK_COMPARE_OP_NEVER)
-                        }
-
-                        if(node.material.wireframe) {
-                            pipeline.rasterizationState.polygonMode(VK10.VK_POLYGON_MODE_LINE)
-                        } else {
-                            pipeline.rasterizationState.polygonMode(VK10.VK_POLYGON_MODE_FILL)
-                        }
-
-                        if(node.material.blending.transparent) {
-                            with(node.material.blending) {
-                                val blendStates = pipeline.colorBlendState.pAttachments()
-                                for (attachment in 0 until (blendStates?.capacity() ?: 0)) {
-                                    val state = blendStates?.get(attachment)
-
-                                    @Suppress("SENSELESS_COMPARISON", "IfThenToSafeAccess")
-                                    if (state != null) {
-                                        state.blendEnable(true)
-                                            .colorBlendOp(colorBlending.toVulkan())
-                                            .srcColorBlendFactor(sourceColorBlendFactor.toVulkan())
-                                            .dstColorBlendFactor(destinationColorBlendFactor.toVulkan())
-                                            .alphaBlendOp(alphaBlending.toVulkan())
-                                            .srcAlphaBlendFactor(sourceAlphaBlendFactor.toVulkan())
-                                            .dstAlphaBlendFactor(destinationAlphaBlendFactor.toVulkan())
-                                            .colorWriteMask(VK10.VK_COLOR_COMPONENT_R_BIT or VK10.VK_COLOR_COMPONENT_G_BIT or VK10.VK_COLOR_COMPONENT_B_BIT or VK10.VK_COLOR_COMPONENT_A_BIT)
-                                    }
-                                }
-                            }
-                        }
-                    },
-                        vertexInputType = s.vertexDescription)
+                    val pipeline = pass.initializePipeline(shaderModules,
+                        node.material.cullingMode,
+                        node.material.depthTest,
+                        node.material.blending,
+                        node.material.wireframe,
+                        s.vertexDescription
+                    )
+                    pass.registerPipelineForNode(pipeline, node)
                 }
 
 
